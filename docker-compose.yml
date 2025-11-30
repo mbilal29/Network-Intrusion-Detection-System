@@ -1,0 +1,34 @@
+services:
+  ids:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.ids
+    container_name: ids
+    networks:
+      ids-net:
+        ipv4_address: 10.0.0.10
+    tty: true
+
+  attacker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.attacker
+    container_name: attacker
+    networks:
+      ids-net:
+        ipv4_address: 10.0.0.20
+    tty: true
+
+  victim:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.victim
+    container_name: victim
+    networks:
+      ids-net:
+        ipv4_address: 10.0.0.30
+    tty: true
+
+networks:
+  ids-net:
+    external: true

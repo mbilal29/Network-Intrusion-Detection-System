@@ -1,0 +1,21 @@
+FROM python:3.10
+
+# Install useful network tools and tshark for PyShark
+RUN apt-get update && apt-get install -y \
+    tshark \
+    iputils-ping \
+    net-tools \
+    tcpdump \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install Python libs for IDS
+RUN pip install --no-cache-dir scapy pyshark pandas numpy matplotlib
+
+# Working directory for IDS code
+WORKDIR /app
+
+# Copy IDS source code from repo into container
+COPY ../ids /app
+
+# Default command: drop into a shell so you can run IDS scripts manually
+CMD ["/bin/bash"]
