@@ -1,0 +1,42 @@
+[
+  {
+    "attack_type": "Port Scan Attack",
+    "total_packets": 50,
+    "alerts": 4,
+    "processing_time": 0.002557992935180664,
+    "throughput": 19546.57470407307,
+    "detection_rate": 8.0
+  },
+  {
+    "attack_type": "SYN Flood Attack",
+    "total_packets": 200,
+    "alerts": 0,
+    "processing_time": 0.007536888122558594,
+    "throughput": 26536.15082879919,
+    "detection_rate": 0.0
+  },
+  {
+    "attack_type": "ARP Spoofing Attack",
+    "total_packets": 2,
+    "alerts": 1,
+    "processing_time": 0.0005979537963867188,
+    "throughput": 3344.7400318979267,
+    "detection_rate": 50.0
+  },
+  {
+    "attack_type": "Normal Traffic (Baseline)",
+    "total_packets": 50,
+    "alerts": 0,
+    "processing_time": 0.0015649795532226562,
+    "throughput": 31949.299207800123,
+    "detection_rate": 0.0
+  },
+  {
+    "attack_type": "Mixed Attack Scenario",
+    "total_packets": 197,
+    "alerts": 2,
+    "processing_time": 0.007299900054931641,
+    "throughput": 26986.670847214056,
+    "detection_rate": 1.015228426395939
+  }
+]

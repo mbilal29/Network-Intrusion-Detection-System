@@ -15,7 +15,7 @@ RUN pip install --no-cache-dir scapy pyshark pandas numpy matplotlib
 WORKDIR /app
 
 # Copy IDS source code from repo into container
-COPY ../ids /app
+COPY ids /app
 
 # Default command: drop into a shell so you can run IDS scripts manually
 CMD ["/bin/bash"]
