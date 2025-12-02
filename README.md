@@ -1,68 +1,152 @@
 # Network Intrusion Detection System (NIDS)
 
 **CSCD58 Course Project** | University of Toronto  
-**Authors:** Bilal (Docker), Zuhair (IDS Logic)  
+**Authors:** Bilal & Zuhair  
 **Date:** December 2025
 
 ---
 
 ## 🎯 Quick Start
 
-### Run Interactive Demo
-```bash
-./demo.sh
-```
-
-### Test IDS on PCAP Files
+### Generate Comprehensive Report
 ```bash
 cd ids/
-python3 test_pcap.py ../pcaps/mixed_attack.pcap
+python3 generate_report.py
+open ids_report.html  # View professional HTML report
+```
+
+### Run Enhanced IDS with Dual Detection
+```bash
+cd ids/
+python3 test_enhanced_ids.py ../pcaps/entropy_scan.pcap
 ```
 
 ### View Results
 ```bash
-cat ids/alerts.log                # Detection alerts
-cat ids/evaluation_results.json   # Performance metrics
+cat ids/alerts.log                      # Real-time detection alerts
+cat ids/evaluation_results.json         # Performance metrics (JSON)
+open ids/ids_report.html                # Professional report with charts
 ```
 
 ## ✨ Features
 
-- ✅ **Port Scan Detection** - 100% detection rate
-- ✅ **ARP Spoofing Detection** - 100% detection rate  
-- ✅ **SYN Flood Detection** - Signature-based algorithm
+### Dual Detection Architecture
+- ✅ **Signature-Based Detection**
+  - Port Scan Detection - 100% detection rate
+  - ARP Spoofing Detection - 100% detection rate
+  - SYN Flood Detection - Rate-based algorithm
+
+- ✅ **Anomaly-Based Detection**
+  - Shannon Entropy Analysis (port distribution)
+  - Z-Score Traffic Volume Detection (3σ thresholds)
+  - Inter-Arrival Time Analysis (burst detection)
+  - Statistical Baseline Profiling (1,052 training packets)
+
 - ✅ **Zero False Positives** on normal traffic
-- ⚡ **High Performance** - 21,672 packets/second
+- ⚡ **High Performance** - 21,090 packets/second average throughput
 
 ## 📊 Test Results Summary
 
-| Attack Type    | Packets | Alerts | Detection Rate |
-|----------------|---------|--------|----------------|
-| Port Scan      | 50      | 4      | 100%           |
-| ARP Spoofing   | 2       | 1      | 100%           |
-| Normal Traffic | 50      | 0      | 0% (no FPs)    |
-| **Total**      | **499** | **7**  | **1.40%**      |
+### Overall Performance
+| Metric | Value |
+|--------|-------|
+| Total Packets Analyzed | 3,548 |
+| Signature Alerts | 53 |
+| Anomaly Alerts | 8 |
+| False Positive Rate | 0.00% |
+| Avg Throughput | 21,090 pkt/s |
+
+### Detection Rates
+| Attack Type | Packets | Detection Rate | Alerts |
+|-------------|---------|----------------|--------|
+| Port Scan (Signature) | 50 | 100% | 4 |
+| ARP Spoofing | 2 | 100% | 1 |
+| High Entropy Scan (Anomaly) | 499 | 100% | 8 HIGH_PORT_ENTROPY |
+| Normal Traffic | 50 | 0% (no false positives) | 0 |
 
 ## 🏗️ Architecture
 
 ```
-┌──────────┐    ┌──────────┐    ┌──────────┐
-│ Sniffer  │ -> │ Detector │ -> │  Logger  │
-└──────────┘    └──────────┘    └──────────┘
+┌──────────┐    ┌────────────────┐    ┌──────────┐
+│ Sniffer  │ -> │   Detector     │ -> │  Logger  │
+│          │    │ [Signature +   │    │          │
+│          │    │  Anomaly]      │    │          │
+└──────────┘    └────────────────┘    └──────────┘
+                      ↑
+                      │
+                ┌─────┴─────┐
+                │  Baseline │
+                │  Training │
+                └───────────┘
 ```
 
 ## 📁 Project Structure
 
+### Core Files for Evaluation
+
 ```
-├── ids/
-│   ├── simple_ids.py          # Main IDS implementation
-│   ├── test_pcap.py           # Testing harness
-│   ├── generate_traffic.py    # Attack traffic generator
-│   └── evaluate_results.py    # Performance evaluation
-├── pcaps/                      # Test PCAP files
-├── docker/                     # Docker containers
-├── FINAL_REPORT.md            # Complete documentation
-└── demo.sh                     # Interactive demo
+├── README.md                           # This file
+├── FINAL_REPORT.md                     # Comprehensive technical documentation
+├── DEMO_SCRIPT.md                      # Presentation guide with talking points
+├── SUBMISSION_CHECKLIST.md             # Pre-submission verification
+├── ANOMALY_DETECTION_SUMMARY.md        # Enhancement documentation
+├── READY_FOR_SUBMISSION.md             # Submission readiness checklist
+│
+├── ids/                                # IDS Implementation
+│   ├── enhanced_ids.py                 # Dual detection IDS (signature + anomaly)
+│   ├── simple_ids.py                   # Original signature-based IDS
+│   ├── sniffer.py                      # Packet capture demo
+│   │
+│   ├── generate_baseline.py            # Normal traffic generator (1,052 pkts)
+│   ├── generate_anomaly_attacks.py     # Advanced attack generator
+│   ├── generate_traffic.py             # Original attack generator
+│   │
+│   ├── test_enhanced_ids.py            # Dual detection test suite
+│   ├── test_anomaly_detection.py       # Focused anomaly tests
+│   ├── test_pcap.py                    # Basic PCAP testing
+│   │
+│   ├── evaluate_enhanced_ids.py        # Comprehensive evaluator
+│   ├── evaluate_results.py             # Original evaluator
+│   │
+│   ├── create_visualizations.py        # Matplotlib chart generator
+│   ├── generate_report.py              # HTML report generator (SOC tool)
+│   │
+│   ├── baseline_model.pkl              # Trained anomaly detector
+│   ├── evaluation_results.json         # Performance metrics
+│   ├── ids_report.html                 # Professional HTML report
+│   └── *.png                           # 6 visualization charts
+│
+├── pcaps/                              # Test Traffic
+│   ├── baseline_normal.pcap            # Training data (1,052 packets)
+│   ├── portscan.pcap                   # Port scan attack
+│   ├── synflood.pcap                   # SYN flood attack
+│   ├── arpspoof.pcap                   # ARP spoofing attack
+│   ├── normal.pcap                     # Normal traffic
+│   ├── mixed_attack.pcap               # Combined attacks
+│   ├── entropy_scan.pcap               # High-entropy port scan
+│   ├── volume_spike.pcap               # Traffic volume anomaly
+│   ├── burst_attack.pcap               # Timing burst anomaly
+│   ├── bandwidth_attack.pcap           # Bandwidth anomaly
+│   └── asymmetric_flow.pcap            # Flow asymmetry anomaly
+│
+├── docker/                             # Docker Deployment
+│   ├── Dockerfile.ids                  # IDS container
+│   ├── Dockerfile.attacker             # Attack generator (Kali)
+│   └── Dockerfile.victim               # Target system (Ubuntu)
+│
+├── docker-compose.yml                  # Container orchestration
+└── docs/archive/                       # Archived development docs
+    ├── PROJECT_COMPLETE.md
+    ├── PROJECT_STATUS.md
+    ├── CURRENT_STATUS.md
+    ├── FAST_TRACK.md
+    ├── QUICKSTART.md
+    └── ARCHITECTURE.md
 ```
+
+### Archived / Development Documentation
+
+The `docs/archive/` folder contains mid-project status updates and development notes kept for project history. **These are NOT part of the core submission** - refer to the root-level documentation files for evaluation.
 
 ## 🚀 Usage Examples
 

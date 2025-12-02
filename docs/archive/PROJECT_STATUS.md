@@ -1,3 +1,10 @@
+# ⚠️ ARCHIVED DOCUMENT - Development History Only
+
+**This document is kept for project history and is NOT part of the core submission.**  
+**For evaluation, refer to: `FINAL_REPORT.md`, `SUBMISSION_CHECKLIST.md`**
+
+---
+
 # Project Status & Division of Work
 
 ## ✅ What's Already Done (Bilal)

@@ -22,6 +22,3 @@ RUN pip3 install --break-system-packages scapy
 
 # Default command: interactive shell
 CMD ["/bin/bash"]
-
-# Default command: interactive shell
-CMD ["/bin/bash"]

@@ -1,3 +1,10 @@
+# ⚠️ ARCHIVED DOCUMENT - Development History Only
+
+**This document is kept for project history and is NOT part of the core submission.**  
+**For evaluation, refer to: `FINAL_REPORT.md`, `SUBMISSION_CHECKLIST.md`, `ANOMALY_DETECTION_SUMMARY.md`**
+
+---
+
 # PROJECT COMPLETION SUMMARY
 **Network Intrusion Detection System - CSCD58**  
 **Date:** December 2, 2025  

@@ -1,3 +1,10 @@
+# ⚠️ ARCHIVED DOCUMENT - Development History Only
+
+**This document is kept for project history and is NOT part of the core submission.**  
+**For evaluation, refer to: `FINAL_REPORT.md`, `ANOMALY_DETECTION_SUMMARY.md`**
+
+---
+
 # IMPORTANT: Current Status & Next Steps
 
 ## 🚨 Current Situation (Dec 2, 2025)

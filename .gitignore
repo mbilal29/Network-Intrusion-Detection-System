@@ -48,6 +48,12 @@ coverage.xml
 *.cover
 *.py.cover
 .hypothesis/
+
+# IDS temporary outputs
+ids/alerts.log
+ids/evaluation_output.txt
+ids/*.log
+ids/*.txt
 .pytest_cache/
 cover/
 
