@@ -1,15 +1,12 @@
-FROM ubuntu:22.04
+FROM alpine:latest
 
-# Avoid interactive prompts
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Basic tools for networking and simple services
-RUN apt update && apt install -y --fix-missing --no-install-recommends \
-    iputils-ping \
-    curl \
-    net-tools \
+# Install basic networking tools and simple HTTP server
+RUN apk add --no-cache \
     python3 \
-    && apt clean && rm -rf /var/lib/apt/lists/*
+    py3-pip \
+    curl \
+    bash \
+    iptables
 
 # Default command: interactive shell
 CMD ["/bin/bash"]
