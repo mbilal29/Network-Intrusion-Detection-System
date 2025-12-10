@@ -8,22 +8,26 @@
 
 ## 🎯 Quick Start
 
-### Fast Testing (Python-Only)
+### 🎪 Interactive Demos (No Report)
 ```bash
 cd ids/
-python3 run_complete_test.py
-# Generates report automatically in 10-20 seconds
+python3 demo_terminal_attacks.py    # Menu-driven, choose attacks
+python3 run_all_demos.py            # All attacks in 30 seconds
 ```
+*Perfect for live demonstrations - shows real-time detection*
 
-### Docker Integration (Realistic Attacks)
+### 📊 Full Reports (With Visualizations)
 ```bash
-docker-compose up -d
+# Fast synthetic testing (10 seconds)
 cd ids/
-python3 run_docker_workflow.py
-# Executes real attacks (nmap, hping3, arping) + generates report
-```
+python3 test_dynamic_ids.py
 
-### View Results
+# Realistic Docker environment (60 seconds) - RECOMMENDED
+python3 workflow_docker_comprehensive.py
+```
+*Generates complete HTML report with 6 charts + metrics*
+
+### 📂 View Results
 ```bash
 open ids/outputs/reports/ids_report.html         # HTML report with charts
 cat ids/outputs/logs/alerts.log                  # Detection alerts
@@ -37,7 +41,9 @@ cat ids/outputs/logs/evaluation_results.json     # Performance metrics
 ### Dual Detection Architecture
 - ✅ **Signature-Based Detection**
   - Port Scan Detection (threshold-based)
-  - SYN Flood Detection (rate-based algorithm)
+  - SYN Flood Detection (rate + ratio-based)
+  - ICMP Flood Detection (sliding window)
+  - DNS Tunneling Detection (length + hex pattern)
   - ARP Spoofing Detection (MAC tracking)
 
 - ✅ **Anomaly-Based Detection**
@@ -46,10 +52,15 @@ cat ids/outputs/logs/evaluation_results.json     # Performance metrics
   - Inter-Arrival Time Analysis (burst detection)
   - Statistical Baseline Profiling
 
+### Professional Reporting
+- ✅ **6 Visualization Charts** - Alert types, timeline, severity, top IPs
+- ✅ **Detailed Metrics** - Detection rates, performance stats
+- ✅ **HTML Dashboard** - Professional corporate design
+
 ### Docker Integration
-- ✅ **Real Attack Tools** - nmap, hping3, arping
-- ✅ **Network Isolation** - 3 isolated containers
-- ✅ **Hybrid Approach** - Docker attacks + Scapy analysis
+- ✅ **Real Attack Tools** - nmap, hping3, arpspoof, dig
+- ✅ **Network Isolation** - 3 isolated containers (attacker/victim/IDS)
+- ✅ **Real Traffic Capture** - tcpdump-based PCAP generation
 
 ---
 
@@ -58,16 +69,40 @@ cat ids/outputs/logs/evaluation_results.json     # Performance metrics
 ### Detection Performance
 | Attack Type | Detection Rate | Alerts Generated |
 |-------------|----------------|------------------|
-| Port Scans | 100% | 8-12 per test |
-| SYN Floods | 100% | 1-2 per test |
-| ARP Spoofing | 100% | 15-20 per test |
+| Port Scans | 100% | 35+ per test |
+| SYN Floods | 100% | 1 per test |
+| ICMP Floods | 100% | 1 per test |
+| DNS Tunneling | 100% | 15 per test |
+| Port Entropy Anomaly | 100% | 11 per test |
 | Normal Traffic | 0% false positives | 0 |
 
-### Key Metrics
-- **Throughput:** ~3,000-3,500 pkt/s
-- **Total Packets:** 400-600 per test run
-- **Total Alerts:** 25-35 per test run
+### Key Metrics (Docker Workflow)
+- **Total Alerts:** 60-70 per comprehensive test
+- **Signature-Based:** 52 alerts
+- **Anomaly-Based:** 11 alerts
 - **False Positive Rate:** 0.00%
+- **Test Duration:** ~60 seconds
+
+---
+
+## 🔧 Customization
+
+All detection thresholds are configurable in `enhanced_ids.py`:
+
+```python
+self.PORT_SCAN_THRESHOLD = 10          # Alert after 10 unique ports
+self.SYN_FLOOD_THRESHOLD = 50          # Alert after 50 SYN packets
+self.ICMP_FLOOD_THRESHOLD = 50         # Alert after 50 ICMP in 5s
+self.DNS_TUNNEL_MIN_LENGTH = 30        # Alert if subdomain > 30 chars
+self.ANOMALY_Z_THRESHOLD = 3.0         # Alert if z-score > 3.0
+```
+
+**To test threshold changes:**
+1. Modify values in `enhanced_ids.py`
+2. Run `python3 workflow_docker_comprehensive.py`
+3. Changes reflected in generated report
+
+See `docs/TESTING_AND_CUSTOMIZATION.md` for detailed examples.
 
 ---
 

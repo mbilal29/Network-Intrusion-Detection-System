@@ -13,6 +13,25 @@ import os
 from collections import defaultdict
 from datetime import datetime
 
+# ============================================================================
+# DETECTION THRESHOLDS - EASY TO MODIFY FOR TESTING
+# ============================================================================
+# Signature-Based Detection Thresholds
+PORT_SCAN_THRESHOLD = 10          # Alert after scanning X unique ports
+SYN_FLOOD_THRESHOLD = 50          # Alert after X SYN packets without responses
+SYN_FLOOD_RATIO = 0.1             # Alert if SYN/ACK ratio below X (10% responses)
+ICMP_FLOOD_THRESHOLD = 50         # Alert after X ICMP packets in time window
+ICMP_FLOOD_WINDOW = 5             # Time window in seconds for ICMP flood detection
+DNS_TUNNEL_MIN_LENGTH = 30        # Alert if DNS subdomain longer than X characters
+DNS_TUNNEL_HEX_THRESHOLD = 0.6    # Alert if subdomain has >X% hexadecimal characters
+
+# Anomaly-Based Detection Thresholds
+ANOMALY_Z_THRESHOLD = 3.0         # Alert if z-score exceeds X standard deviations
+PORT_ENTROPY_MULTIPLIER = 1.3     # Alert if entropy > baseline * X
+ANOMALY_WINDOW_DURATION = 10      # Time window in seconds for anomaly detection
+
+# ============================================================================
+
 class AnomalyDetector:
     """Statistical anomaly detection engine"""
     
@@ -190,7 +209,7 @@ class EnhancedIDS:
         # Anomaly tracking
         self.window_packets = []
         self.window_start = time.time()
-        self.window_duration = 10  # seconds
+        self.window_duration = ANOMALY_WINDOW_DURATION
         self.dst_ports_window = []
         self.inter_arrival_window = []
         self.last_packet_time = None
@@ -199,22 +218,28 @@ class EnhancedIDS:
         
         # ICMP flood tracking
         self.icmp_tracker = defaultdict(list)  # {src_ip: [timestamps]}
-        self.icmp_window = 5  # seconds
+        self.icmp_window = ICMP_FLOOD_WINDOW
         self.icmp_alerted = set()  # Track which IPs we've already alerted for ICMP flood
         
         # DNS tunneling tracking
         self.dns_queries = []  # Track DNS queries for analysis
         
-        # Thresholds
-        self.PORT_SCAN_THRESHOLD = 10
-        self.SYN_FLOOD_THRESHOLD = 50
-        self.ICMP_FLOOD_THRESHOLD = 50  # ICMP packets per window
-        self.DNS_TUNNEL_MIN_LENGTH = 30  # Suspicious subdomain length
-        self.ANOMALY_Z_THRESHOLD = 3.0  # 3 standard deviations
+        # Thresholds (loaded from global constants at top of file)
+        self.PORT_SCAN_THRESHOLD = PORT_SCAN_THRESHOLD
+        self.SYN_FLOOD_THRESHOLD = SYN_FLOOD_THRESHOLD
+        self.SYN_FLOOD_RATIO = SYN_FLOOD_RATIO
+        self.ICMP_FLOOD_THRESHOLD = ICMP_FLOOD_THRESHOLD
+        self.DNS_TUNNEL_MIN_LENGTH = DNS_TUNNEL_MIN_LENGTH
+        self.DNS_TUNNEL_HEX_THRESHOLD = DNS_TUNNEL_HEX_THRESHOLD
+        self.ANOMALY_Z_THRESHOLD = ANOMALY_Z_THRESHOLD
+        self.PORT_ENTROPY_MULTIPLIER = PORT_ENTROPY_MULTIPLIER
         
         # Alerts
         self.alerts = []
         self.alert_counts = defaultdict(int)
+        
+        # Verbose output control
+        self.verbose = True  # Can be set to False to suppress packet-level output
         
     def alert(self, alert_type, details, severity="MEDIUM"):
         """Generate and store an alert"""
@@ -250,7 +275,7 @@ class EnhancedIDS:
         # Only alert once per IP per window
         if self.syn_tracker[src_ip] > self.SYN_FLOOD_THRESHOLD and src_ip not in self.syn_alerted:
             syn_ack_ratio = self.syn_ack_tracker[src_ip] / max(self.syn_tracker[src_ip], 1)
-            if syn_ack_ratio < 0.1:
+            if syn_ack_ratio < self.SYN_FLOOD_RATIO:
                 self.alert("SYN_FLOOD", 
                           f"{src_ip} sent {self.syn_tracker[src_ip]} SYNs (ratio: {syn_ack_ratio:.2f})",
                           "CRITICAL")
@@ -293,7 +318,8 @@ class EnhancedIDS:
             if len(part) > self.DNS_TUNNEL_MIN_LENGTH:
                 # Check for hex-encoded data patterns
                 hex_chars = sum(1 for c in part[:32] if c in '0123456789abcdefABCDEF-')
-                if hex_chars > 20:  # >60% hex characters suggests encoding
+                hex_ratio = hex_chars / min(len(part), 32)
+                if hex_ratio > self.DNS_TUNNEL_HEX_THRESHOLD:  # Uses global threshold
                     self.alert("DNS_TUNNEL",
                               f"Suspicious DNS query with long subdomain: {query_name[:80]}",
                               "MEDIUM")
@@ -350,8 +376,8 @@ class EnhancedIDS:
             baseline_entropy = self.anomaly_detector.baseline['port_entropy']
             
             # High entropy indicates scanning (many different ports)
-            # Lowered threshold from 1.5x to 1.3x for better sensitivity
-            if current_entropy > baseline_entropy * 1.3 and current_entropy > 3.5:
+            # Uses PORT_ENTROPY_MULTIPLIER from global config
+            if current_entropy > baseline_entropy * self.PORT_ENTROPY_MULTIPLIER and current_entropy > 3.5:
                 self.alert("HIGH_PORT_ENTROPY",
                           f"Port entropy: {current_entropy:.2f} (baseline: {baseline_entropy:.2f}) - possible scanning",
                           "MEDIUM")
@@ -423,8 +449,9 @@ class EnhancedIDS:
             if flags & 0x12 == 0x12:  # SYN-ACK
                 self.syn_ack_tracker[dst_ip] += 1
             
-            flag_str = self._get_flag_string(flags)
-            print(f"[TCP] {src_ip}:{pkt[TCP].sport} → {dst_ip}:{dst_port} [{flag_str}]")
+            if self.verbose:
+                flag_str = self._get_flag_string(flags)
+                print(f"[TCP] {src_ip}:{pkt[TCP].sport} → {dst_ip}:{dst_port} [{flag_str}]")
         
         # ARP packet analysis
         elif ARP in pkt:
@@ -440,14 +467,16 @@ class EnhancedIDS:
             # Detect ICMP floods (type 8 = echo request)
             if pkt[ICMP].type == 8:
                 self.detect_icmp_flood(src_ip)
-            print(f"[ICMP] {src_ip} → {pkt[IP].dst} (type {pkt[ICMP].type})")
+            if self.verbose:
+                print(f"[ICMP] {src_ip} → {pkt[IP].dst} (type {pkt[ICMP].type})")
         
         # DNS packets
         elif DNS in pkt and pkt.haslayer(DNSQR):
             query_name = pkt[DNSQR].qname.decode('utf-8', errors='ignore')
             self.dns_queries.append(query_name)
             self.detect_dns_tunnel(query_name)
-            print(f"[DNS Query] {query_name}")
+            if self.verbose:
+                print(f"[DNS Query] {query_name}")
     
     def _get_flag_string(self, flags):
         """Convert TCP flags to readable string"""
