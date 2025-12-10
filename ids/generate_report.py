@@ -92,29 +92,35 @@ def build_report(metrics, charts):
         
         pcap_path = None
         
-        # Try docker PCAP if it exists and might match
+        # Find the most recently modified PCAP file
+        newest_pcap = None
+        newest_time = 0
+        
+        # Check docker PCAP
         if os.path.exists(docker_pcap):
+            mtime = os.path.getmtime(docker_pcap)
+            if mtime > newest_time:
+                newest_time = mtime
+                newest_pcap = docker_pcap
+        
+        # Check test PCAPs
+        for test_pcap in test_pcaps:
+            if os.path.exists(test_pcap):
+                mtime = os.path.getmtime(test_pcap)
+                if mtime > newest_time:
+                    newest_time = mtime
+                    newest_pcap = test_pcap
+        
+        # Use the newest PCAP for timestamp display
+        if newest_pcap:
             try:
-                docker_packets = rdpcap(docker_pcap)
-                if len(docker_packets) == total_packets or total_packets > 400:  # Docker usually has 400+ packets
-                    pcap_path = docker_pcap
-                    print(f"   Using Docker PCAP (matches packet count: {len(docker_packets)})")
+                pcap_path = newest_pcap
+                if 'docker' in newest_pcap:
+                    print(f"   Using Docker PCAP (most recent)")
+                else:
+                    print(f"   Using Test PCAP: {os.path.basename(newest_pcap)} (most recent)")
             except:
                 pass
-        
-        # Fallback to test PCAPs if docker doesn't match
-        if not pcap_path:
-            for test_pcap in test_pcaps:
-                if os.path.exists(test_pcap):
-                    try:
-                        test_packets = rdpcap(test_pcap)
-                        # Use test PCAP if packet count is reasonable for tests (<400)
-                        if total_packets < 400:
-                            pcap_path = test_pcap
-                            print(f"   Using Test PCAP: {test_pcap}")
-                            break
-                    except:
-                        continue
         
         if pcap_path:
             packets = rdpcap(pcap_path)
