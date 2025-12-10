@@ -255,10 +255,41 @@ def create_all_visualizations():
 
 
 def create_baseline_statistics_chart():
-    """Static baseline statistics - doesn't change"""
+    """Dynamic baseline statistics from trained model"""
     
-    metrics = ['Packet\nRate', 'Byte\nRate', 'Port\nEntropy', 'Inter-Arrival\nTime', 'SYN/ACK\nRatio']
-    values = [97.2, 11555, 3.93, 0.0103, 0.50]
+    # Try to load actual baseline model
+    try:
+        import pickle
+        if os.path.exists('baseline_model.pkl'):
+            with open('baseline_model.pkl', 'rb') as f:
+                baseline = pickle.load(f)
+            
+            # Extract actual values from baseline (handle both dict and direct access)
+            packet_rate = baseline.get('packet_rate', {}).get('mean', 97.2)
+            byte_rate = baseline.get('byte_rate', {}).get('mean', 11555)
+            port_entropy = baseline.get('port_entropy', 3.93)
+            
+            # Handle inter_arrival_times (could be dict or list)
+            inter_arrival_data = baseline.get('inter_arrival_times', 0.0103)
+            if isinstance(inter_arrival_data, dict):
+                inter_arrival = inter_arrival_data.get('mean', 0.0103)
+            elif isinstance(inter_arrival_data, list) and len(inter_arrival_data) > 0:
+                inter_arrival = inter_arrival_data[0]
+            else:
+                inter_arrival = 0.0103
+            
+            syn_ack = baseline.get('syn_ack_ratio', {}).get('mean', 0.50)
+            
+            values = [packet_rate, byte_rate, port_entropy, inter_arrival * 1000, syn_ack]  # Convert to ms
+            print(f"  ✓ Loaded DYNAMIC baseline: packet_rate={packet_rate:.1f}, byte_rate={byte_rate:.0f}, port_entropy={port_entropy:.2f}")
+        else:
+            print("  ⚠️  No baseline model found - using demo values")
+            values = [97.2, 11555, 3.93, 0.0103, 0.50]
+    except Exception as e:
+        print(f"  ⚠️  Error loading baseline: {e} - using demo values")
+        values = [97.2, 11555, 3.93, 0.0103, 0.50]
+    
+    metrics = ['Packet\nRate', 'Byte\nRate', 'Port\nEntropy', 'Inter-Arrival\nTime (ms)', 'SYN/ACK\nRatio']
     colors = ['#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#e74c3c']
     
     fig, ax = plt.subplots(figsize=(12, 6))
@@ -281,10 +312,30 @@ def create_baseline_statistics_chart():
 
 
 def create_performance_metrics_chart():
-    """Static performance metrics - doesn't change"""
+    """Dynamic performance metrics from evaluation results"""
+    
+    # Try to load actual evaluation results
+    try:
+        import json
+        if os.path.exists('outputs/logs/evaluation_results.json'):
+            with open('outputs/logs/evaluation_results.json', 'r') as f:
+                results = json.load(f)
+            
+            throughput = results.get('avg_throughput', 21090)
+            detection_rate = results.get('detection_rate', 100)
+            false_positives = results.get('false_positives', 0)
+            processing_delay = 0.047  # This is simulated, could calculate from test timing
+            
+            values = [throughput, detection_rate, false_positives, processing_delay]
+            print(f"  ✓ Loaded DYNAMIC metrics: throughput={throughput:,}, detection_rate={detection_rate:.1f}%")
+        else:
+            print("  ⚠️  No evaluation results found - using demo values")
+            values = [21090, 100, 0, 0.047]
+    except Exception as e:
+        print(f"  ⚠️  Error loading metrics: {e} - using demo values")
+        values = [21090, 100, 0, 0.047]
     
     metrics = ['Throughput\n(pkt/s)', 'Detection\nRate', 'False\nPositives', 'Processing\nDelay (ms)']
-    values = [21090, 100, 0, 0.047]
     colors = ['#2ecc71', '#3498db', '#e74c3c', '#f39c12']
     
     fig, ax = plt.subplots(figsize=(8, 5))

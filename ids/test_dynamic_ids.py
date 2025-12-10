@@ -40,7 +40,9 @@ def generate_random_normal_traffic(num_packets=50):
         
         packets.append(pkt)
     
+    # Save both as normal.pcap (for testing) and baseline_normal.pcap (for training)
     wrpcap('../pcaps/normal.pcap', packets)
+    wrpcap('../pcaps/baseline_normal.pcap', packets)
     return len(packets)
 
 
@@ -235,12 +237,14 @@ def main():
     
     ids = EnhancedIDS(use_anomaly_detection=True)
     
-    # Train baseline
+    # Train baseline (using freshly generated baseline_normal.pcap)
     baseline_file = '../pcaps/baseline_normal.pcap'
     if os.path.exists(baseline_file):
-        print(f"\n📚 Training anomaly detector from baseline...")
+        print(f"\n📚 Training anomaly detector from FRESH baseline...")
         ids.anomaly_detector.train_from_pcap(baseline_file)
-        print("✅ Baseline trained successfully")
+        # Save the fresh baseline model
+        ids.anomaly_detector.save_model('baseline_model.pkl')
+        print("✅ Fresh baseline trained and saved successfully")
     else:
         print("⚠️  Warning: No baseline found, using default parameters")
     
@@ -297,6 +301,11 @@ def main():
     signature_alerts = len([a for a in ids.alerts if 'PORT_SCAN' in a or 'SYN_FLOOD' in a or 'ARP_SPOOF' in a or 'DNS_TUNNEL' in a or 'ICMP_FLOOD' in a])
     anomaly_alerts = total_alerts - signature_alerts
     
+    # Calculate detection rates for better insights
+    detection_rate = (total_alerts / total_packets * 100) if total_packets > 0 else 0
+    signature_rate = (signature_alerts / total_packets * 100) if total_packets > 0 else 0
+    anomaly_rate = (anomaly_alerts / total_packets * 100) if total_packets > 0 else 0
+    
     evaluation_data = {
         "total_packets": total_packets,
         "total_alerts": total_alerts,
@@ -304,6 +313,9 @@ def main():
         "anomaly_alerts": anomaly_alerts,
         "false_positives": 0,
         "avg_throughput": avg_throughput,
+        "detection_rate": round(detection_rate, 2),
+        "signature_detection_rate": round(signature_rate, 2),
+        "anomaly_detection_rate": round(anomaly_rate, 2),
         "test_cases": [
             {"name": name, "alerts": count} for name, count in results.items()
         ],
@@ -315,6 +327,20 @@ def main():
         json.dump(evaluation_data, f, indent=2)
     
     print("📊 Metrics saved to: outputs/logs/evaluation_results.json")
+    
+    # Generate dynamic visualizations from fresh data
+    print("\n🎨 Generating dynamic visualizations...")
+    try:
+        import subprocess
+        result = subprocess.run(['python3', 'create_dynamic_visualizations.py'], 
+                              capture_output=True, text=True)
+        if result.returncode == 0:
+            print("✅ Visualizations updated successfully")
+        else:
+            print(f"⚠️  Visualization generation had warnings")
+    except Exception as e:
+        print(f"⚠️  Visualization generation failed: {e}")
+    
     print("=" * 70)
 
 

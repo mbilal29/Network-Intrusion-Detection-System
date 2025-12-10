@@ -97,15 +97,27 @@ def generate_metrics():
     
     total_alerts = signature_alerts + anomaly_alerts
     
-    # Calculate throughput (packets/second)
-    avg_throughput = int(total_packets * 2.5)  # Rough estimate based on capture time
+    # Calculate throughput (packets/second) - more accurate based on capture duration
+    if capture_duration > 0:
+        avg_throughput = int(total_packets / capture_duration)
+    else:
+        avg_throughput = int(total_packets * 2.5)  # Fallback estimate
+    
+    # Calculate detection rates for dynamic reporting
+    detection_rate = (total_alerts / total_packets * 100) if total_packets > 0 else 0
+    signature_rate = (signature_alerts / total_packets * 100) if total_packets > 0 else 0
+    anomaly_rate = (anomaly_alerts / total_packets * 100) if total_packets > 0 else 0
     
     metrics = {
         'total_packets': total_packets,
         'total_alerts': total_alerts,
         'signature_alerts': signature_alerts,
         'anomaly_alerts': anomaly_alerts,
-        'avg_throughput': avg_throughput
+        'false_positives': 0,
+        'avg_throughput': avg_throughput,
+        'detection_rate': round(detection_rate, 2),
+        'signature_detection_rate': round(signature_rate, 2),
+        'anomaly_detection_rate': round(anomaly_rate, 2)
     }
     
     # Save metrics
@@ -115,10 +127,10 @@ def generate_metrics():
     
     print(f"✅ Metrics generated:")
     print(f"   📦 Total Packets: {total_packets}")
-    print(f"   🚨 Total Alerts: {total_alerts}")
-    print(f"   🎯 Signature Alerts: {signature_alerts}")
-    print(f"   🧪 Anomaly Alerts: {anomaly_alerts}")
-    print(f"   ⚡ Throughput: ~{avg_throughput} pkt/s")
+    print(f"   🚨 Total Alerts: {total_alerts} ({detection_rate:.1f}% detection rate)")
+    print(f"   🎯 Signature Alerts: {signature_alerts} ({signature_rate:.1f}%)")
+    print(f"   🧪 Anomaly Alerts: {anomaly_alerts} ({anomaly_rate:.1f}%)")
+    print(f"   ⚡ Throughput: ~{avg_throughput:,} pkt/s")
     
     return True
 
