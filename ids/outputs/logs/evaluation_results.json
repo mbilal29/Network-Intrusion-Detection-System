@@ -1,0 +1,7 @@
+{
+  "total_packets": 539,
+  "total_alerts": 63,
+  "signature_alerts": 52,
+  "anomaly_alerts": 11,
+  "avg_throughput": 1347
+}

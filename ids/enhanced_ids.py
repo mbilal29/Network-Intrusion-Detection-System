@@ -4,11 +4,12 @@ ENHANCED IDS WITH ANOMALY DETECTION
 Implements both signature-based and anomaly-based detection
 """
 
-from scapy.all import sniff, IP, TCP, UDP, ICMP, ARP, wrpcap, rdpcap
+from scapy.all import sniff, IP, TCP, UDP, ICMP, ARP, wrpcap, rdpcap, DNS, DNSQR
 import time
 import math
 import json
 import pickle
+import os
 from collections import defaultdict
 from datetime import datetime
 
@@ -26,6 +27,13 @@ class AnomalyDetector:
             'flow_asymmetry': {'mean': 0, 'std': 0}
         }
         self.trained = False
+        
+        # Auto-load baseline model if it exists
+        if os.path.exists('baseline_model.pkl'):
+            try:
+                self.load_model('baseline_model.pkl')
+            except Exception as e:
+                print(f"⚠️  Failed to load baseline model: {e}")
         
     def calculate_entropy(self, values):
         """Calculate Shannon entropy of a distribution"""
@@ -189,9 +197,19 @@ class EnhancedIDS:
         self.syn_window_start = time.time()
         self.syn_alerted = set()  # Track which IPs we've already alerted for SYN flood
         
+        # ICMP flood tracking
+        self.icmp_tracker = defaultdict(list)  # {src_ip: [timestamps]}
+        self.icmp_window = 5  # seconds
+        self.icmp_alerted = set()  # Track which IPs we've already alerted for ICMP flood
+        
+        # DNS tunneling tracking
+        self.dns_queries = []  # Track DNS queries for analysis
+        
         # Thresholds
         self.PORT_SCAN_THRESHOLD = 10
         self.SYN_FLOOD_THRESHOLD = 50
+        self.ICMP_FLOOD_THRESHOLD = 50  # ICMP packets per window
+        self.DNS_TUNNEL_MIN_LENGTH = 30  # Suspicious subdomain length
         self.ANOMALY_Z_THRESHOLD = 3.0  # 3 standard deviations
         
         # Alerts
@@ -206,7 +224,8 @@ class EnhancedIDS:
         self.alerts.append(alert_msg)
         self.alert_counts[alert_type] += 1
         
-        with open('alerts.log', 'a') as f:
+        os.makedirs('outputs/logs', exist_ok=True)
+        with open('outputs/logs/alerts.log', 'a') as f:
             f.write(alert_msg + '\n')
     
     # Signature-based detection methods
@@ -244,6 +263,41 @@ class EnhancedIDS:
                       f"IP {ip} MAC changed: {self.arp_table[ip]} → {mac}",
                       "HIGH")
         self.arp_table[ip] = mac
+    
+    def detect_icmp_flood(self, src_ip):
+        """Signature-based: Detect ICMP flood attacks"""
+        current_time = time.time()
+        # Add current timestamp
+        self.icmp_tracker[src_ip].append(current_time)
+        # Remove old timestamps outside the window
+        self.icmp_tracker[src_ip] = [
+            ts for ts in self.icmp_tracker[src_ip] 
+            if current_time - ts <= self.icmp_window
+        ]
+        # Check if threshold exceeded
+        if len(self.icmp_tracker[src_ip]) > self.ICMP_FLOOD_THRESHOLD:
+            if src_ip not in self.icmp_alerted:
+                self.alert("ICMP_FLOOD",
+                          f"ICMP flood from {src_ip}: {len(self.icmp_tracker[src_ip])} packets in {self.icmp_window}s",
+                          "HIGH")
+                self.icmp_alerted.add(src_ip)
+    
+    def detect_dns_tunnel(self, query_name):
+        """Signature-based: Detect DNS tunneling attempts"""
+        if not query_name:
+            return
+        
+        # Check for suspiciously long subdomains (common in DNS tunneling)
+        parts = query_name.split('.')
+        for part in parts[:-2]:  # Exclude TLD and domain
+            if len(part) > self.DNS_TUNNEL_MIN_LENGTH:
+                # Check for hex-encoded data patterns
+                hex_chars = sum(1 for c in part[:32] if c in '0123456789abcdefABCDEF-')
+                if hex_chars > 20:  # >60% hex characters suggests encoding
+                    self.alert("DNS_TUNNEL",
+                              f"Suspicious DNS query with long subdomain: {query_name[:80]}",
+                              "MEDIUM")
+                    return
     
     # Anomaly-based detection methods
     def detect_traffic_volume_anomaly(self):
@@ -296,7 +350,8 @@ class EnhancedIDS:
             baseline_entropy = self.anomaly_detector.baseline['port_entropy']
             
             # High entropy indicates scanning (many different ports)
-            if current_entropy > baseline_entropy * 1.5 and current_entropy > 4.0:
+            # Lowered threshold from 1.5x to 1.3x for better sensitivity
+            if current_entropy > baseline_entropy * 1.3 and current_entropy > 3.5:
                 self.alert("HIGH_PORT_ENTROPY",
                           f"Port entropy: {current_entropy:.2f} (baseline: {baseline_entropy:.2f}) - possible scanning",
                           "MEDIUM")
@@ -381,7 +436,18 @@ class EnhancedIDS:
         
         # ICMP packets
         elif ICMP in pkt and IP in pkt:
-            print(f"[ICMP] {pkt[IP].src} → {pkt[IP].dst}")
+            src_ip = pkt[IP].src
+            # Detect ICMP floods (type 8 = echo request)
+            if pkt[ICMP].type == 8:
+                self.detect_icmp_flood(src_ip)
+            print(f"[ICMP] {src_ip} → {pkt[IP].dst} (type {pkt[ICMP].type})")
+        
+        # DNS packets
+        elif DNS in pkt and pkt.haslayer(DNSQR):
+            query_name = pkt[DNSQR].qname.decode('utf-8', errors='ignore')
+            self.dns_queries.append(query_name)
+            self.detect_dns_tunnel(query_name)
+            print(f"[DNS Query] {query_name}")
     
     def _get_flag_string(self, flags):
         """Convert TCP flags to readable string"""

@@ -1,16 +1,21 @@
 FROM alpine:latest
 
-# Install networking and attack tools (hping3 not available in Alpine)
+# Install networking and attack tools
 RUN apk add --no-cache \
     nmap \
     nmap-scripts \
+    arping \
     python3 \
     py3-pip \
     tcpdump \
-    bash
+    bash \
+    bind-tools \
+    iperf3
 
-# Install Scapy for custom attacks
-RUN pip3 install --break-system-packages scapy
+# Install Scapy and dnspython for custom attacks
+RUN pip3 install --break-system-packages scapy dnspython
+
+# Note: hping3 not available in Alpine, we'll use Scapy to generate SYN floods
 
 # Default command: drop into shell
 CMD ["/bin/bash"]

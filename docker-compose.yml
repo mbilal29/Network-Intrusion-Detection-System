@@ -7,6 +7,9 @@ services:
     networks:
       ids-net:
         ipv4_address: 10.0.0.10
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
     tty: true
 
   attacker:

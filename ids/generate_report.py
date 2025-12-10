@@ -9,22 +9,39 @@ import os
 import base64
 from datetime import datetime
 
-def load_metrics(json_path='evaluation_results.json'):
-    """Load evaluation metrics from JSON file."""
+def load_metrics(json_path='outputs/logs/evaluation_results.json'):
+    """Load evaluation metrics from JSON file or parse from alerts.log."""
     try:
         with open(json_path, 'r') as f:
             return json.load(f)
     except FileNotFoundError:
-        print(f"⚠️  Warning: {json_path} not found. Using default metrics.")
-        return {
-            "total_packets": 499,
-            "total_alerts": 9,
-            "signature_alerts": 9,
-            "anomaly_alerts": 8,
-            "false_positives": 0,
-            "avg_throughput": 21090,
-            "test_cases": []
-        }
+        print(f"⚠️  Warning: {json_path} not found. Parsing from alerts.log...")
+        # Parse alerts.log for dynamic fallback
+        try:
+            with open('outputs/logs/alerts.log', 'r') as f:
+                alerts = f.readlines()
+                total_alerts = len(alerts)
+                signature_alerts = len([a for a in alerts if any(sig in a for sig in ['PORT_SCAN', 'SYN_FLOOD', 'ARP_SPOOF', 'DNS_TUNNEL', 'ICMP_FLOOD'])])
+                return {
+                    "total_packets": 0,
+                    "total_alerts": total_alerts,
+                    "signature_alerts": signature_alerts,
+                    "anomaly_alerts": total_alerts - signature_alerts,
+                    "false_positives": 0,
+                    "avg_throughput": 0,
+                    "test_cases": []
+                }
+        except FileNotFoundError:
+            print("⚠️  No alerts.log found either. Using minimal fallback.")
+            return {
+                "total_packets": 0,
+                "total_alerts": 0,
+                "signature_alerts": 0,
+                "anomaly_alerts": 0,
+                "false_positives": 0,
+                "avg_throughput": 0,
+                "test_cases": []
+            }
 
 def image_to_base64(image_path):
     """Convert image file to base64 for embedding in HTML."""
@@ -37,12 +54,12 @@ def image_to_base64(image_path):
 def embed_charts():
     """Load all visualization charts and convert to base64."""
     charts = {
-        'detection_comparison': 'detection_comparison.png',
-        'alert_distribution': 'alert_distribution.png',
-        'baseline_statistics': 'baseline_statistics.png',
-        'performance_metrics': 'performance_metrics.png',
-        'entropy_comparison': 'entropy_comparison.png',
-        'detection_capabilities': 'detection_capabilities.png'
+        'detection_comparison': 'outputs/visualizations/detection_comparison.png',
+        'alert_distribution': 'outputs/visualizations/alert_distribution.png',
+        'baseline_statistics': 'outputs/visualizations/baseline_statistics.png',
+        'performance_metrics': 'outputs/visualizations/performance_metrics.png',
+        'entropy_comparison': 'outputs/visualizations/entropy_comparison.png',
+        'detection_capabilities': 'outputs/visualizations/detection_capabilities.png'
     }
     
     embedded = {}
@@ -60,6 +77,20 @@ def build_report(metrics, charts):
     """Generate HTML report with embedded visualizations."""
     
     timestamp = datetime.now().strftime("%B %d, %Y at %I:%M %p")
+    
+    # Get PCAP capture timestamp if available
+    pcap_capture_time = "N/A"
+    try:
+        from scapy.all import rdpcap
+        pcap_path = '../pcaps/docker_comprehensive_capture.pcap'
+        if os.path.exists(pcap_path):
+            packets = rdpcap(pcap_path)
+            if len(packets) > 0:
+                first_ts = datetime.fromtimestamp(float(packets[0].time))
+                last_ts = datetime.fromtimestamp(float(packets[-1].time))
+                pcap_capture_time = f"{first_ts.strftime('%B %d, %Y at %I:%M:%S %p')} to {last_ts.strftime('%I:%M:%S %p')}"
+    except:
+        pass
     
     # Calculate detection rates
     total_packets = metrics.get('total_packets', 499)
@@ -82,10 +113,10 @@ def build_report(metrics, charts):
         }}
         
         body {{
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
-            color: #333;
-            background: #f5f5f7;
+            color: #2c3e50;
+            background: #f8f9fa;
             padding: 20px;
         }}
         
@@ -93,44 +124,49 @@ def build_report(metrics, charts):
             max-width: 1200px;
             margin: 0 auto;
             background: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border-radius: 2px;
             overflow: hidden;
         }}
         
         header {{
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #1a1a2e;
             color: white;
-            padding: 40px;
-            text-align: center;
+            padding: 50px 40px;
+            border-bottom: 3px solid #0f3460;
         }}
         
         header h1 {{
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            font-weight: 700;
+            font-size: 2.2em;
+            margin-bottom: 8px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
         }}
         
         header p {{
-            font-size: 1.1em;
-            opacity: 0.9;
+            font-size: 1em;
+            opacity: 0.85;
+            font-weight: 300;
         }}
         
         .metadata {{
             background: #f8f9fa;
-            padding: 15px 40px;
-            border-bottom: 1px solid #e0e0e0;
+            padding: 18px 40px;
+            border-bottom: 1px solid #dee2e6;
             display: flex;
             justify-content: space-between;
             flex-wrap: wrap;
+            font-size: 0.9em;
         }}
         
         .metadata div {{
             margin: 5px 0;
+            color: #495057;
         }}
         
         .metadata strong {{
-            color: #667eea;
+            color: #0f3460;
+            font-weight: 600;
         }}
         
         section {{
@@ -138,31 +174,34 @@ def build_report(metrics, charts):
         }}
         
         h2 {{
-            color: #667eea;
-            font-size: 2em;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 3px solid #667eea;
+            color: #1a1a2e;
+            font-size: 1.75em;
+            margin-bottom: 25px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #0f3460;
+            font-weight: 600;
+            letter-spacing: -0.3px;
         }}
         
         h3 {{
-            color: #764ba2;
-            font-size: 1.5em;
-            margin: 30px 0 15px 0;
+            color: #2c3e50;
+            font-size: 1.3em;
+            margin: 25px 0 15px 0;
+            font-weight: 600;
         }}
         
         .overview {{
             background: #f8f9fa;
             padding: 25px;
-            border-radius: 8px;
-            border-left: 5px solid #667eea;
+            border-radius: 2px;
+            border-left: 4px solid #0f3460;
             margin-bottom: 30px;
         }}
         
         .overview p {{
-            font-size: 1.1em;
-            line-height: 1.8;
-            color: #555;
+            font-size: 1.05em;
+            line-height: 1.7;
+            color: #495057;
         }}
         
         .metrics-grid {{
@@ -173,81 +212,89 @@ def build_report(metrics, charts):
         }}
         
         .metric-card {{
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
             color: white;
-            padding: 25px;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
+            padding: 28px;
+            border-radius: 2px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
         }}
         
         .metric-card:hover {{
-            transform: translateY(-5px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }}
         
         .metric-value {{
             font-size: 2.5em;
             font-weight: 700;
             margin: 10px 0;
+            letter-spacing: -1px;
         }}
         
         .metric-label {{
-            font-size: 0.9em;
+            font-size: 0.85em;
             opacity: 0.9;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
+            font-weight: 500;
         }}
         
         .chart-container {{
             margin: 30px 0;
-            background: #f8f9fa;
+            background: #ffffff;
             padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-radius: 2px;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }}
         
         .chart-container img {{
             width: 100%;
+            max-width: 800px;
             height: auto;
-            border-radius: 5px;
+            border-radius: 2px;
             display: block;
+            margin: 0 auto;
         }}
         
         .chart-caption {{
             margin-top: 15px;
             padding: 15px;
-            background: white;
-            border-radius: 5px;
-            color: #555;
-            font-style: italic;
-            border-left: 4px solid #667eea;
+            background: #f8f9fa;
+            border-radius: 2px;
+            color: #495057;
+            font-size: 0.92em;
+            border-left: 3px solid #0f3460;
+            line-height: 1.6;
         }}
         
         .summary-box {{
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            background: linear-gradient(135deg, #0f3460 0%, #16213e 100%);
             color: white;
-            padding: 30px;
-            border-radius: 10px;
+            padding: 35px;
+            border-radius: 2px;
             margin: 30px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }}
         
         .summary-box h3 {{
             color: white;
             border: none;
             margin-bottom: 20px;
+            font-weight: 600;
         }}
         
         .summary-box ul {{
             list-style: none;
-            font-size: 1.1em;
+            font-size: 1.05em;
         }}
         
         .summary-box li {{
             padding: 10px 0;
             padding-left: 30px;
             position: relative;
+            line-height: 1.6;
         }}
         
         .summary-box li:before {{
@@ -255,7 +302,8 @@ def build_report(metrics, charts):
             position: absolute;
             left: 0;
             font-weight: bold;
-            font-size: 1.3em;
+            font-size: 1.2em;
+            color: #4ade80;
         }}
         
         table {{
@@ -263,21 +311,21 @@ def build_report(metrics, charts):
             border-collapse: collapse;
             margin: 20px 0;
             background: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid #e9ecef;
         }}
         
         th, td {{
-            padding: 15px;
+            padding: 14px 16px;
             text-align: left;
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px solid #e9ecef;
         }}
         
         th {{
-            background: #667eea;
+            background: #1a1a2e;
             color: white;
             font-weight: 600;
             text-transform: uppercase;
-            font-size: 0.9em;
+            font-size: 0.85em;
             letter-spacing: 1px;
         }}
         
@@ -287,15 +335,16 @@ def build_report(metrics, charts):
         
         .badge {{
             display: inline-block;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.85em;
+            padding: 4px 10px;
+            border-radius: 2px;
+            font-size: 0.8em;
             font-weight: 600;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }}
         
         .badge-success {{
-            background: #38ef7d;
+            background: #0f3460;
             color: white;
         }}
         
@@ -344,7 +393,8 @@ def build_report(metrics, charts):
         
         <div class="metadata">
             <div><strong>Project:</strong> CSCD58 Network IDS</div>
-            <div><strong>Generated:</strong> {timestamp}</div>
+            <div><strong>Report Generated:</strong> {timestamp}</div>
+            <div><strong>Traffic Captured:</strong> {pcap_capture_time}</div>
             <div><strong>Detection Mode:</strong> Dual (Signature + Anomaly)</div>
             <div><strong>Authors:</strong> Bilal & Zuhair</div>
         </div>
@@ -622,7 +672,8 @@ def main():
     html_content = build_report(metrics, charts)
     
     # Save report
-    output_file = 'ids_report.html'
+    os.makedirs('outputs/reports', exist_ok=True)
+    output_file = 'outputs/reports/ids_report.html'
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(html_content)
     

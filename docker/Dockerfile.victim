@@ -6,7 +6,8 @@ RUN apk add --no-cache \
     py3-pip \
     curl \
     bash \
-    iptables
+    iptables \
+    tcpdump
 
 # Default command: interactive shell
 CMD ["/bin/bash"]
