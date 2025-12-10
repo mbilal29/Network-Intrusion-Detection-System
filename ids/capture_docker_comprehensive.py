@@ -183,7 +183,7 @@ def execute_anomaly_based_attacks():
     print("=" * 70)
     
     # Create Python script for anomaly attacks
-    scapy_script = '''
+    scapy_script = r'''
 from scapy.all import *
 import random
 import time
@@ -201,7 +201,7 @@ print(f"   ✅ Sent SYN packets to 150 random ports (high entropy)")
 
 time.sleep(1)
 
-print("\\n[2/3] Distributed Port Scan (Low & High Ports)")
+print("\n[2/3] Distributed Port Scan (Low & High Ports)")
 low_ports = list(range(1, 50))
 high_ports = list(range(10000, 10100))
 all_ports = low_ports + high_ports
@@ -212,7 +212,7 @@ print(f"   ✅ Sent packets to 50 distributed ports")
 
 time.sleep(1)
 
-print("\\n[3/3] Traffic Volume Spike (Moderate Burst)")
+print("\n[3/3] Traffic Volume Spike (Moderate Burst)")
 # Use random high ports to preserve entropy diversity
 burst_packets = []
 for i in range(50):
@@ -221,15 +221,21 @@ for i in range(50):
     send(pkt, verbose=0)
 print(f"   ✅ Sent 50 packets in rapid burst to random ports")
 
-print("\\n✅ Anomaly attacks completed")
+print("\n✅ Anomaly attacks completed")
 '''
     
     # Write script to temp file in attacker container
     print("\n⚙️  Preparing Scapy attack scripts in attacker container...")
     
-    # Create script file
-    write_cmd = f"docker exec attacker sh -c 'cat > /tmp/anomaly_attacks.py << \"EOF\"\n{scapy_script}\nEOF'"
-    subprocess.run(write_cmd, shell=True, capture_output=True)
+    # Create script file using printf to avoid heredoc issues
+    import tempfile
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        f.write(scapy_script)
+        temp_path = f.name
+    
+    subprocess.run(['docker', 'cp', temp_path, 'attacker:/tmp/anomaly_attacks.py'], 
+                   capture_output=True)
+    os.unlink(temp_path)
     
     # Execute Scapy script
     print("🚀 Executing anomaly-based attacks...")
