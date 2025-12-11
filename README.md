@@ -1,4 +1,4 @@
-# Network Intrusion Detection System
+# Network Intrusion Detection System - Project Report
 
 **CSCD58 Computer Security Course Project**  
 **Authors:** Muhammad Bilal & Zuhair Khan  
@@ -6,34 +6,6 @@
 **Date:** December 10, 2025
 
 **📹 Project Demo Video:** [Watch Here](https://docs.google.com/document/d/19Kz9cadneugkCYGYfl98pCVCgkSSDmg7sZLIwlQ3Fag/edit?usp=sharing)
-
----
-
-## 🎯 Quick Start
-
-### ⚡ Recommended Workflow (Complete Testing)
-```bash
-# 1. Start Docker containers
-docker-compose up -d
-
-# 2. Run comprehensive Docker workflow
-cd ids/
-python3 workflow_docker_comprehensive.py
-
-# 3. View results (auto-opens in browser)
-open outputs/reports/ids_report.html
-```
-*Generates complete HTML report with 6 charts + metrics in ~50 seconds*
-
-### 📊 Results Summary
-| Metric | Value |
-|--------|-------|
-| **Total Alerts** | 67 per comprehensive test |
-| **Detection Rate** | 100% for all attack types |
-| **False Positive Rate** | 0.00% |
-| **Test Duration** | ~50 seconds |
-| **Signature Alerts** | 53 (PORT_SCAN, SYN_FLOOD, ICMP_FLOOD, DNS_TUNNEL) |
-| **Anomaly Alerts** | 14 (HIGH_PORT_ENTROPY) |
 
 ---
 
