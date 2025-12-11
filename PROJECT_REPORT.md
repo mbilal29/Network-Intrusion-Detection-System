@@ -55,85 +55,131 @@ This project implements a production-grade Network Intrusion Detection System (N
 
 ## 2. Team Contributions
 
-### Muhammad Bilal - Infrastructure & Integration (50%)
+Both team members contributed equally to all aspects of the project, collaborating closely on design, implementation, and testing. Work was divided as follows:
 
-#### Docker Environment Architecture (High Complexity)
-- Designed 3-container network topology with proper isolation and routing
-- Created Dockerfiles for IDS, attacker, and victim containers with appropriate capabilities (CAP_NET_RAW, CAP_NET_ADMIN)
-- Configured docker-compose.yml with static IP addressing (10.0.0.0/24 network)
-- Resolved package repository issues and optimized container build process
+### Muhammad Bilal (50%)
 
-#### Attack Suite Implementation (High Complexity)
-- Developed `capture_docker_comprehensive.py` orchestrating 8 different attack types
-- Integrated real penetration testing tools (nmap, hping3, arpspoof, dig)
-- Implemented sophisticated Scapy-based attack scripts for anomaly generation
-- Created timing sequences for realistic attack scenarios (200-port scans, 180 ICMP floods, 25 DNS tunnels)
+#### Core IDS Detection Engine
+- Co-developed signature-based detection algorithms in `enhanced_ids.py` for port scanning, SYN floods, and ARP spoofing
+- Implemented packet parsing and protocol analysis logic
+- Designed stateful tracking mechanisms for connection monitoring
+- Created configurable threshold system for detection tuning
 
-#### Workflow Automation (Medium Complexity)
-- Built `workflow_docker_comprehensive.py` for end-to-end testing pipeline
-- Implemented tcpdump capture synchronization across containers
-- Created PCAP extraction and analysis automation
-- Developed cleanup and preparation routines for reproducible testing
+#### Docker Infrastructure & Network Architecture
+- Designed and implemented 3-container network topology with isolated subnets
+- Created Dockerfiles for IDS, attacker, and victim containers with proper capabilities
+- Configured docker-compose.yml with static IP addressing (10.0.0.0/24)
+- Resolved cross-platform compatibility issues (macOS/Linux)
 
-#### Documentation & Organization (Medium Complexity)
-- Authored comprehensive README.md with quick-start guides
-- Created Docker setup documentation and troubleshooting guides
-- Organized project structure with clear separation of concerns
-- Maintained version control and collaborative development workflow
+#### Attack Suite & Workflow Integration
+- Developed `capture_docker_comprehensive.py` orchestrating multiple attack types
+- Integrated penetration testing tools (nmap, hping3, arpspoof)
+- Built `workflow_docker_comprehensive.py` for automated end-to-end testing
+- Implemented PCAP capture synchronization and extraction automation
+
+#### Documentation & Project Organization
+- Authored comprehensive README.md and setup guides
+- Created troubleshooting documentation and quick-start instructions
+- Maintained Git repository and version control workflow
+- Organized project structure with modular design
 
 ---
 
-### Zuhair Khan - Detection Algorithms & Analysis (50%)
+### Zuhair Khan (50%)
 
-#### Core IDS Engine (High Complexity)
-- Implemented dual detection architecture in `enhanced_ids.py` (529 lines)
-- Developed signature-based detection algorithms for 5 attack types with stateful tracking
-- Created anomaly detection engine with statistical baseline modeling
-- Designed configurable threshold system for easy tuning and testing
-
-#### Statistical Analysis Framework (High Complexity)
+#### Core IDS Detection Engine
+- Co-developed anomaly detection algorithms using statistical modeling
 - Implemented Shannon entropy calculations for port distribution analysis
-- Developed Z-score anomaly detection with mean/standard deviation modeling
-- Created inter-arrival time analysis for burst detection
-- Built baseline training system with model persistence (pickle serialization)
+- Created Z-score anomaly detection with baseline training
+- Designed inter-arrival time analysis for burst pattern detection
 
-#### Reporting & Visualization System (Medium Complexity)
-- Developed `generate_report.py` creating professional HTML dashboards (746 lines)
-- Implemented `create_dynamic_visualizations.py` generating 6 chart types using matplotlib
-- Created base64 image embedding for standalone HTML reports
-- Designed metrics collection and JSON serialization system
+#### Reporting & Visualization System
+- Developed `generate_report.py` for HTML dashboard generation (746 lines)
+- Implemented `create_dynamic_visualizations.py` with 6 chart types using matplotlib
+- Created base64 image embedding for standalone reports
+- Designed JSON metrics collection and serialization system
 
-#### Testing & Validation (Medium Complexity)
-- Built `test_dynamic_ids.py` for randomized attack generation and validation
+#### Testing & Demonstration Framework
+- Built `test_dynamic_ids.py` for randomized attack generation
 - Created `demo_terminal_attacks.py` for interactive demonstrations
-- Developed `test_threshold_sensitivity.py` for detection parameter optimization
-- Implemented evaluation metrics calculation (detection rates, throughput, false positives)
+- Developed `test_threshold_sensitivity.py` for parameter optimization
+- Implemented `run_all_demos.py` for automated testing sequences
 
-#### Demo Scripts & Presentation Tools (Medium Complexity)
-- Created `run_all_demos.py` for automated 4-attack demonstrations
-- Built `demo_presentation.sh` for live presentation scenarios
-- Developed synthetic traffic generators for each attack type
-- Implemented verbose/quiet modes for different use cases
+#### Attack Implementation & Validation
+- Developed sophisticated Scapy-based attack scripts for anomaly generation
+- Created synthetic traffic generators for ICMP floods and DNS tunneling
+- Implemented timing sequences for realistic attack scenarios
+- Built evaluation metrics calculation (detection rates, throughput)
 
 ---
 
 ## 3. Running & Testing Instructions
 
 ### 3.1 Prerequisites
-```bash
-# Python 3.8+ with dependencies
-pip3 install scapy matplotlib numpy pandas
 
-# Docker Desktop (for Docker workflows)
-docker --version
-docker-compose --version
+**Required Software:**
+- Python 3.8 or higher
+- Docker Desktop (for comprehensive workflow only)
+- Git (for cloning repository)
+
+**System Requirements:**
+- macOS, Linux, or Windows with WSL2
+- At least 2GB RAM
+- Internet connection for package installation
+
+### 3.2 Initial Setup
+
+**Step 1: Clone the repository**
+```bash
+git clone https://github.com/mbilal29/Network-Intrusion-Detection-System.git
+cd Network-Intrusion-Detection-System
 ```
 
-### 3.2 Quick Start Options
+**Step 2: Set up Python environment**
+```bash
+# Create virtual environment
+python3 -m venv .venv
+
+# Activate virtual environment
+source .venv/bin/activate  # macOS/Linux
+# OR
+.venv\Scripts\activate     # Windows
+```
+
+**Step 3: Install dependencies**
+```bash
+pip install scapy matplotlib numpy pandas
+```
+
+**Step 4: Navigate to working directory**
+```bash
+cd ids
+```
+**Important:** All testing commands should be run from the `ids/` directory!
+
+**Step 5: Docker Setup (Optional - for comprehensive workflow only)**
+```bash
+# Go back to project root
+cd ..
+
+# Create Docker network (one-time setup)
+docker network create --subnet=10.0.0.0/24 ids-net
+
+# Start Docker containers
+docker compose up -d
+
+# Verify containers are running
+docker ps
+
+# Navigate back to ids directory for testing
+cd ids
+```
+
+### 3.3 Quick Start Options
 
 #### Option A: Interactive Demo (No Docker - 30 seconds)
 ```bash
-cd ids/
+# Ensure you're in the ids/ directory
 python3 demo_terminal_attacks.py
 # Choose attacks from menu (1-4) or run all (5)
 ```
@@ -154,6 +200,9 @@ python3 test_dynamic_ids.py
 
 #### Option D: Comprehensive Docker Testing (Recommended - 60 seconds)
 ```bash
+# Make sure you're in the project root directory first
+cd Network-Intrusion-Detection-System
+
 # Step 1: Create Docker network (one-time setup)
 docker network create --subnet=10.0.0.0/24 ids-net
 
@@ -163,8 +212,10 @@ docker compose up -d
 # Step 3: Verify containers running
 docker compose ps
 
-# Step 4: Run comprehensive workflow
-cd ids/
+# Step 4: Navigate to ids directory (IMPORTANT!)
+cd ids
+
+# Step 5: Run comprehensive workflow
 python3 workflow_docker_comprehensive.py
 
 # This will:
