@@ -57,7 +57,7 @@ This project implements a production-grade Network Intrusion Detection System (N
 
 Both team members contributed equally to all aspects of the project, collaborating closely on design, implementation, and testing. Work was divided as follows:
 
-### Muhammad Bilal (50%)
+### Muhammad Bilal 
 
 #### Core IDS Detection Engine
 - Co-developed signature-based detection algorithms in `enhanced_ids.py` for port scanning, SYN floods, and ARP spoofing
@@ -85,7 +85,7 @@ Both team members contributed equally to all aspects of the project, collaborati
 
 ---
 
-### Zuhair Khan (50%)
+### Zuhair Khan 
 
 #### Core IDS Detection Engine
 - Co-developed anomaly detection algorithms using statistical modeling
@@ -120,19 +120,23 @@ Both team members contributed equally to all aspects of the project, collaborati
 **Required Software:**
 - Python 3.8 or higher
 - Docker Desktop (for comprehensive workflow only)
-- Git (for cloning repository)
 
 **System Requirements:**
 - macOS, Linux, or Windows with WSL2
 - At least 2GB RAM
-- Internet connection for package installation
+- Unzip utility (built into most systems)
 
 ### 3.2 Initial Setup
 
-**Step 1: Clone the repository**
+**Step 1: Extract the project files**
 ```bash
-git clone https://github.com/mbilal29/Network-Intrusion-Detection-System.git
+# Extract the ZIP file to your desired location
+unzip Network-Intrusion-Detection-System.zip
 cd Network-Intrusion-Detection-System
+
+# Verify project structure
+ls
+# Should see: ids/, docker/, pcaps/, docs/, docker-compose.yml, README.md
 ```
 
 **Step 2: Set up Python environment**
@@ -157,65 +161,58 @@ cd ids
 ```
 **Important:** All testing commands should be run from the `ids/` directory!
 
-**Step 5: Docker Setup (Optional - for comprehensive workflow only)**
+**Step 5: Docker Setup for comprehensive workflow only**
 ```bash
-# Go back to project root
-cd ..
+# While in the ids/ directory, these commands will work:
 
 # Create Docker network (one-time setup)
 docker network create --subnet=10.0.0.0/24 ids-net
 
-# Start Docker containers
+# Start Docker containers (docker compose looks in parent directory)
 docker compose up -d
 
 # Verify containers are running
 docker ps
-
-# Navigate back to ids directory for testing
-cd ids
 ```
 
 ### 3.3 Quick Start Options
 
-#### Option A: Interactive Demo (No Docker - 30 seconds)
+#### Option A: Interactive Demo (No Docker)
 ```bash
 # Ensure you're in the ids/ directory
 python3 demo_terminal_attacks.py
 # Choose attacks from menu (1-4) or run all (5)
 ```
 
-#### Option B: Automated Demo (No Docker - 30 seconds)
+#### Option B: Automated Demo (No Docker)
 ```bash
 cd ids/
 python3 run_all_demos.py
 # Executes all 4 attacks automatically with detection
 ```
 
-#### Option C: Fast Synthetic Testing (No Docker - 10 seconds)
+#### Option C: Fast Synthetic Testing (No Docker)
 ```bash
 cd ids/
 python3 test_dynamic_ids.py
 # Generates randomized attacks, detects, creates HTML report
 ```
 
-#### Option D: Comprehensive Docker Testing (Recommended - 60 seconds)
+#### Option D: Comprehensive Docker Testing (Recommended)
 ```bash
-# Make sure you're in the project root directory first
-cd Network-Intrusion-Detection-System
+# Navigate to ids directory
+cd ids
 
 # Step 1: Create Docker network (one-time setup)
 docker network create --subnet=10.0.0.0/24 ids-net
 
-# Step 2: Start containers
+# Step 2: Start containers (compose file is in parent directory)
 docker compose up -d
 
 # Step 3: Verify containers running
 docker compose ps
 
-# Step 4: Navigate to ids directory (IMPORTANT!)
-cd ids
-
-# Step 5: Run comprehensive workflow
+# Step 4: Run comprehensive workflow
 python3 workflow_docker_comprehensive.py
 
 # This will:
@@ -244,10 +241,16 @@ ls ids/outputs/visualizations/
 
 ### 3.4 Testing Specific Features
 
+**Note:** Make sure virtual environment is activated before running Python tests!
+
 #### Test Port Scan Detection
 ```bash
+# Activate virtual environment first
+source .venv/bin/activate  # macOS/Linux
+# OR .venv\Scripts\activate  # Windows
+
 cd ids/
-python3 - <<'EOF'
+python3 <<'EOF'
 from scapy.all import *
 from enhanced_ids import EnhancedIDS
 
@@ -262,18 +265,24 @@ for pkt in packets:
 
 print(f"Alerts: {len(ids.alerts)}")
 EOF
+
+# Expected output: "Alerts: 10" with PORT_SCAN and SYN_FLOOD detections
 ```
 
 #### Test Anomaly Detection
 ```bash
-cd ids/
+# Ensure venv is activated and you're in ids/ directory
 python3 test_threshold_sensitivity.py
-# Tests various detection thresholds and shows results
+
+# Expected: Runs 3 tests (default, stricter, looser thresholds)
+# Shows detection rate changes for each configuration
 ```
 
 #### Test Docker Attacks Individually
+**Prerequisite:** Docker containers must be running (`docker compose up -d` from ids/ directory)
+
 ```bash
-# Port scan only
+# Port scan only (from any directory)
 docker exec attacker nmap -p 1-100 10.0.0.30
 
 # SYN flood only
@@ -281,6 +290,7 @@ docker exec attacker hping3 -S -p 80 --flood --rand-source 10.0.0.30
 
 # View IDS logs in real-time
 docker compose logs -f ids
+# Press Ctrl+C to exit log view
 ```
 
 ### 3.5 Cleanup
@@ -395,11 +405,13 @@ Alerts Log → Parse Alerts → Count by Type → Generate Charts → Embed in H
 Metrics JSON → Calculate Stats → Format Tables → 
 ```
 
-Charts generated using matplotlib:
-- Pie charts for distribution
-- Bar charts for comparisons  
-- Line charts for timelines
-- Heatmaps for correlation analysis
+Six visualization charts generated using matplotlib:
+1. **Alert Distribution** - Pie chart showing percentage of each attack type
+2. **Severity Distribution** - Bar chart of HIGH/CRITICAL/MEDIUM alerts
+3. **Detection Summary** - Stacked bar comparing signature vs anomaly detection
+4. **Attack Timeline** - Horizontal bar chart of detection counts per attack type
+5. **Baseline Statistics** - Bar chart of normal traffic metrics (packet rate, port entropy, inter-arrival time)
+6. **Performance Metrics** - Bar chart showing throughput, detection rate, and processing statistics
 
 ---
 
@@ -457,22 +469,9 @@ Charts generated using matplotlib:
 - Potential for false positives if baseline is polluted
 - Less interpretable than signature-based alerts
 
-### 5.3 Docker vs. Synthetic Testing Comparison
 
-| Aspect | Docker Workflow | Synthetic (Scapy) |
-|--------|----------------|-------------------|
-| Realism | High (real tools) | Medium (simulated) |
-| Reproducibility | Medium (timing varies) | High (deterministic) |
-| Setup Time | ~10 min (first run) | ~30 sec |
-| Test Duration | ~60 sec | ~10 sec |
-| Tool Coverage | nmap, hping3, arpspoof | Scapy-generated |
-| Network Isolation | Full (containers) | None (host) |
-| Debugging | Harder (multi-container) | Easier (single process) |
-| Best Use Case | Demos, final validation | Development, tuning |
 
-**Recommendation:** Use synthetic testing during development for rapid iteration, then validate with Docker workflow before deployment.
-
-### 5.4 Threshold Tuning Analysis
+### 5.3 Threshold Tuning Analysis
 
 Testing revealed optimal thresholds balance sensitivity vs. false positives:
 
@@ -483,9 +482,8 @@ Testing revealed optimal thresholds balance sensitivity vs. false positives:
 | ICMP Flood | FP on ping tests | 50/5s | Miss distributed floods |
 | Z-Score | FP on traffic spikes | 3.0σ | Miss subtle anomalies |
 
-**Key Insight:** Thresholds must be tuned to specific network environments. Our defaults work well for lab/test networks but may need adjustment for production deployment.
 
-### 5.5 Performance Bottlenecks
+### 5.4 Performance Bottlenecks
 
 Profiling identified key performance factors:
 
@@ -500,7 +498,7 @@ Profiling identified key performance factors:
 - Cache baseline statistics to avoid repeated calculations
 - Stream alerts to external SIEM instead of local files
 
-### 5.6 Real-World Deployment Considerations
+### 5.5 Real-World Deployment Considerations
 
 **Security Hardening:**
 - Run IDS container as non-root user with minimal capabilities
@@ -536,23 +534,7 @@ This project successfully demonstrates a production-capable intrusion detection 
 
 ### 6.2 Technical Lessons Learned
 
-#### Network Security
-- **Defense in Depth:** Single detection method insufficient; dual approach (signature + anomaly) provides comprehensive coverage
-- **Baseline Importance:** Accurate normal traffic modeling crucial for anomaly detection effectiveness
-- **Threshold Tuning:** No one-size-fits-all; thresholds must be adjusted per network environment
-- **Attack Diversity:** Real attacks vary significantly; testing must include multiple tools and techniques
-
-#### Software Engineering
-- **Containerization Benefits:** Docker isolation enables safe attack testing without compromising host systems
-- **Modular Design:** Separation of detection, reporting, and testing components enables independent development and testing
-- **Configuration Management:** Exposing thresholds as constants enables easy tuning without code changes
-- **Automated Testing:** Reproducible test workflows essential for validation and regression testing
-
-#### Data Science & Statistics
-- **Feature Selection:** Port entropy and inter-arrival times proved most effective anomaly indicators
-- **Statistical Methods:** Z-score (3σ) provided good balance between sensitivity and false positives
-- **Training Data Quality:** Clean baseline traffic critical; even small amounts of attack traffic pollute baseline
-- **Visualization Value:** Charts communicate results more effectively than raw numbers for stakeholders
+This project reinforced critical principles in network security, software engineering, and data science. We learned that defense in depth through dual detection (signature + anomaly) provides comprehensive coverage where single methods fail, and that accurate baseline modeling with clean training data is crucial for anomaly detection effectiveness. Docker containerization proved invaluable for safe attack testing, while modular design enabled independent component development. Statistical methods like Z-score (3σ) balanced sensitivity with false positive rates, and port entropy combined with inter-arrival times emerged as the most effective anomaly indicators. Threshold tuning proved environment-specific rather than universal, requiring sensitivity testing for optimization. Additionally, automated testing workflows and comprehensive visualization were as critical as core functionality for validation and stakeholder communication. The project demonstrated that exposing configuration parameters enables real-world deployment flexibility, and that PCAP-based testing provides reproducible evaluation superior to live testing scenarios.
 
 ### 6.3 Challenges Overcome
 
@@ -566,27 +548,8 @@ This project successfully demonstrates a production-capable intrusion detection 
 
 5. **Cross-Container Communication:** Packet visibility between containers required proper network configuration and capabilities (CAP_NET_RAW)
 
-### 6.4 Future Enhancements
 
-**Short-Term (1-2 weeks):**
-- Add HTTP/HTTPS protocol analysis for application-layer attacks
-- Implement machine learning classifier (Random Forest) for anomaly scoring
-- Create Grafana dashboard for real-time monitoring
-- Add IPv6 support for dual-stack networks
-
-**Medium-Term (1-2 months):**
-- Deploy on cloud infrastructure (AWS VPC, Azure VNet)
-- Implement distributed IDS across multiple network segments
-- Add deep packet inspection (DPI) for payload analysis
-- Create mobile app for alert notifications
-
-**Long-Term (3+ months):**
-- Integrate threat intelligence feeds (STIX/TAXII)
-- Implement behavioral analysis with LSTM neural networks
-- Add automated response capabilities (firewall rule updates)
-- Achieve 10Gbps wire-speed processing with DPDK
-
-### 6.5 Key Takeaways
+### 6.4 Key Takeaways
 
 **For Network Security Practitioners:**
 - Dual detection architecture (signature + anomaly) provides comprehensive threat coverage
@@ -606,18 +569,8 @@ This project successfully demonstrates a production-capable intrusion detection 
 - Training data quality more important than algorithm sophistication
 - Real-time constraints require algorithm optimization (O(1) vs O(n²))
 
-### 6.6 Course Relevance
 
-This project directly applies CSCD58 course concepts:
-
-- **Network Security Fundamentals:** Protocol analysis (TCP/IP, ARP, DNS, ICMP)
-- **Attack Taxonomy:** Port scanning, flooding, spoofing, tunneling
-- **Detection Methods:** Signature-based vs. anomaly-based trade-offs
-- **Defense Mechanisms:** Intrusion detection as preventive security control
-- **Threat Modeling:** Understanding attacker techniques and detection strategies
-- **Security Metrics:** False positive/negative rates, detection accuracy
-
-The hands-on implementation reinforced theoretical knowledge and provided practical experience with real-world security tools and techniques.
+The hands-on implementation reinforced theoretical knowledge and provided practical experience with real-world security tools, statistical methods, and advanced detection techniques.
 
 ---
 

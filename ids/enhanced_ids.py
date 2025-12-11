@@ -17,7 +17,7 @@ from datetime import datetime
 # DETECTION THRESHOLDS - EASY TO MODIFY FOR TESTING
 # ============================================================================
 # Signature-Based Detection Thresholds
-PORT_SCAN_THRESHOLD = 10          # Alert after scanning X unique ports
+PORT_SCAN_THRESHOLD = 5          # Alert after scanning X unique ports
 SYN_FLOOD_THRESHOLD = 50          # Alert after X SYN packets without responses
 SYN_FLOOD_RATIO = 0.1             # Alert if SYN/ACK ratio below X (10% responses)
 ICMP_FLOOD_THRESHOLD = 50         # Alert after X ICMP packets in time window
