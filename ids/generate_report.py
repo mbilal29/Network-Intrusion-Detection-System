@@ -54,12 +54,12 @@ def image_to_base64(image_path):
 def embed_charts():
     """Load all visualization charts and convert to base64."""
     charts = {
-        'detection_comparison': 'outputs/visualizations/detection_comparison.png',
         'alert_distribution': 'outputs/visualizations/alert_distribution.png',
+        'severity_distribution': 'outputs/visualizations/severity_distribution.png',
+        'detection_summary': 'outputs/visualizations/detection_summary.png',
+        'attack_timeline': 'outputs/visualizations/attack_timeline.png',
         'baseline_statistics': 'outputs/visualizations/baseline_statistics.png',
-        'performance_metrics': 'outputs/visualizations/performance_metrics.png',
-        'entropy_comparison': 'outputs/visualizations/entropy_comparison.png',
-        'detection_capabilities': 'outputs/visualizations/detection_capabilities.png'
+        'performance_metrics': 'outputs/visualizations/performance_metrics.png'
     }
     
     embedded = {}
@@ -550,11 +550,11 @@ def build_report(metrics, charts):
 """
     
     # Add visualizations with captions
-    if 'detection_capabilities' in charts:
+    if 'attack_timeline' in charts:
         html += f"""
             <div class="chart-container">
                 <h3>Detection Capabilities Overview</h3>
-                <img src="{charts['detection_capabilities']}" alt="Detection Capabilities">
+                <img src="{charts['attack_timeline']}" alt="Detection Capabilities">
                 <div class="chart-caption">
                     <strong>What this shows:</strong> Comprehensive overview of all detection capabilities implemented 
                     in the IDS, including both signature-based (PORT_SCAN, SYN_FLOOD, ARP_SPOOF) and anomaly-based 
@@ -564,11 +564,11 @@ def build_report(metrics, charts):
             </div>
 """
     
-    if 'detection_comparison' in charts:
+    if 'detection_summary' in charts:
         html += f"""
             <div class="chart-container">
                 <h3>Signature vs Anomaly Detection Comparison</h3>
-                <img src="{charts['detection_comparison']}" alt="Detection Comparison">
+                <img src="{charts['detection_summary']}" alt="Detection Comparison">
                 <div class="chart-caption">
                     <strong>What this shows:</strong> Side-by-side comparison of signature-based detection (rule matching 
                     for known attacks) versus anomaly-based detection (statistical deviation from baseline). The dual 
@@ -578,11 +578,11 @@ def build_report(metrics, charts):
             </div>
 """
     
-    if 'entropy_comparison' in charts:
+    if 'severity_distribution' in charts:
         html += f"""
             <div class="chart-container">
                 <h3>Shannon Entropy Analysis: Normal vs Attack Traffic</h3>
-                <img src="{charts['entropy_comparison']}" alt="Entropy Comparison">
+                <img src="{charts['severity_distribution']}" alt="Entropy Comparison">
                 <div class="chart-caption">
                     <strong>What this shows:</strong> Shannon entropy (H = -Σ p<sub>i</sub> log₂ p<sub>i</sub>) comparison 
                     between normal traffic and port scan attacks. Normal traffic exhibits low entropy (3.93 bits) due to 
