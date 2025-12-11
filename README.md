@@ -1,7 +1,7 @@
 # Network Intrusion Detection System (NIDS)
 
 **CSCD58 Course Project** | University of Toronto  
-**Authors:** Bilal & Zuhair  
+**Authors:** Muhammad Bilal & Zuhair Khan
 **Date:** December 2025
 
 ---

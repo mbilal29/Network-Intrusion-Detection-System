@@ -332,7 +332,7 @@ def main():
     print("\n🎨 Generating dynamic visualizations...")
     try:
         import subprocess
-        result = subprocess.run(['python3', 'create_dynamic_visualizations.py'], 
+        result = subprocess.run([sys.executable, 'create_dynamic_visualizations.py'], 
                               capture_output=True, text=True)
         if result.returncode == 0:
             print("✅ Visualizations updated successfully")

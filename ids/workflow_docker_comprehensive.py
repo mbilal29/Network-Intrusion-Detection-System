@@ -39,7 +39,7 @@ def run_comprehensive_capture():
     print("STEP 1: CAPTURING COMPREHENSIVE DOCKER ATTACKS")
     print("=" * 80)
     
-    result = subprocess.run(['python3', 'capture_docker_comprehensive.py'],
+    result = subprocess.run([sys.executable, 'capture_docker_comprehensive.py'],
                           capture_output=False, text=True)  # Show output in real-time
     
     if result.returncode != 0:
@@ -141,7 +141,7 @@ def create_visualizations():
     print("STEP 3: CREATING VISUALIZATIONS")
     print("=" * 80)
     
-    result = subprocess.run(['python3', 'create_dynamic_visualizations.py'],
+    result = subprocess.run([sys.executable, 'create_dynamic_visualizations.py'],
                           capture_output=True, text=True)
     
     if result.returncode == 0:
@@ -164,7 +164,7 @@ def generate_report():
     print("STEP 4: GENERATING HTML REPORT")
     print("=" * 80)
     
-    result = subprocess.run(['python3', 'generate_report.py'],
+    result = subprocess.run([sys.executable, 'generate_report.py'],
                           capture_output=True, text=True)
     
     if result.returncode == 0:

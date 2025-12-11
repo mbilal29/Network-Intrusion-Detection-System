@@ -227,15 +227,19 @@ print("\n✅ Anomaly attacks completed")
     # Write script to temp file in attacker container
     print("\n⚙️  Preparing Scapy attack scripts in attacker container...")
     
-    # Create script file using printf to avoid heredoc issues
-    import tempfile
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+    # Create script file in /tmp (works on both macOS and Linux)
+    temp_path = '/tmp/anomaly_attacks_host.py'
+    with open(temp_path, 'w') as f:
         f.write(scapy_script)
-        temp_path = f.name
     
     subprocess.run(['docker', 'cp', temp_path, 'attacker:/tmp/anomaly_attacks.py'], 
                    capture_output=True)
-    os.unlink(temp_path)
+    
+    # Clean up host temp file
+    try:
+        os.unlink(temp_path)
+    except:
+        pass
     
     # Execute Scapy script
     print("🚀 Executing anomaly-based attacks...")
@@ -283,8 +287,20 @@ print("\\n✅ Timing anomaly attack completed")
 '''
     
     print("⚙️  Preparing timing attack script...")
-    write_cmd = f"docker exec attacker sh -c 'cat > /tmp/timing_attack.py << \"EOF\"\n{scapy_script}\nEOF'"
-    subprocess.run(write_cmd, shell=True, capture_output=True)
+    
+    # Write script file to host then copy to container
+    temp_path = '/tmp/timing_attack_host.py'
+    with open(temp_path, 'w') as f:
+        f.write(scapy_script)
+    
+    subprocess.run(['docker', 'cp', temp_path, 'attacker:/tmp/timing_attack.py'], 
+                   capture_output=True)
+    
+    # Clean up host temp file
+    try:
+        os.unlink(temp_path)
+    except:
+        pass
     
     print("🚀 Executing timing anomaly attack...")
     cmd = ['docker', 'exec', 'attacker', 'python3', '/tmp/timing_attack.py']
