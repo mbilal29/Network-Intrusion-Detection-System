@@ -232,8 +232,15 @@ print("\n✅ Anomaly attacks completed")
     with open(temp_path, 'w') as f:
         f.write(scapy_script)
     
-    subprocess.run(['docker', 'cp', temp_path, 'attacker:/tmp/anomaly_attacks.py'], 
-                   capture_output=True)
+    # Copy script to attacker container with error checking
+    copy_result = subprocess.run(
+        ['docker', 'cp', temp_path, 'attacker:/tmp/anomaly_attacks.py'], 
+        capture_output=True, text=True
+    )
+    
+    if copy_result.returncode != 0:
+        print(f"❌ Failed to copy script to container: {copy_result.stderr}")
+        # Still try to continue with other attacks
     
     # Clean up host temp file
     try:
@@ -293,8 +300,15 @@ print("\\n✅ Timing anomaly attack completed")
     with open(temp_path, 'w') as f:
         f.write(scapy_script)
     
-    subprocess.run(['docker', 'cp', temp_path, 'attacker:/tmp/timing_attack.py'], 
-                   capture_output=True)
+    # Copy script to attacker container with error checking
+    copy_result = subprocess.run(
+        ['docker', 'cp', temp_path, 'attacker:/tmp/timing_attack.py'], 
+        capture_output=True, text=True
+    )
+    
+    if copy_result.returncode != 0:
+        print(f"❌ Failed to copy timing script to container: {copy_result.stderr}")
+        # Still try to continue
     
     # Clean up host temp file
     try:
