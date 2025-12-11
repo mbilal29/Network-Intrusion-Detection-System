@@ -224,29 +224,19 @@ print(f"   ✅ Sent 50 packets in rapid burst to random ports")
 print("\n✅ Anomaly attacks completed")
 '''
     
-    # Write script to temp file in attacker container
+    # Write script directly inside container to avoid user namespace mapping issues
     print("\n⚙️  Preparing Scapy attack scripts in attacker container...")
     
-    # Create script file in /tmp (works on both macOS and Linux)
-    temp_path = '/tmp/anomaly_attacks_host.py'
-    with open(temp_path, 'w') as f:
-        f.write(scapy_script)
+    # Write script directly into container using sh -c
+    # This avoids docker cp user namespace mapping issues on Linux
+    write_cmd = ['docker', 'exec', 'attacker', 'sh', '-c', 
+                 f'cat > /tmp/anomaly_attacks.py << \'EOFMARKER\'\n{scapy_script}\nEOFMARKER']
     
-    # Copy script to attacker container with error checking
-    copy_result = subprocess.run(
-        ['docker', 'cp', temp_path, 'attacker:/tmp/anomaly_attacks.py'], 
-        capture_output=True, text=True
-    )
+    write_result = subprocess.run(write_cmd, capture_output=True, text=True)
     
-    if copy_result.returncode != 0:
-        print(f"❌ Failed to copy script to container: {copy_result.stderr}")
+    if write_result.returncode != 0:
+        print(f"❌ Failed to write script to container: {write_result.stderr}")
         # Still try to continue with other attacks
-    
-    # Clean up host temp file
-    try:
-        os.unlink(temp_path)
-    except:
-        pass
     
     # Execute Scapy script
     print("🚀 Executing anomaly-based attacks...")
@@ -295,26 +285,15 @@ print("\\n✅ Timing anomaly attack completed")
     
     print("⚙️  Preparing timing attack script...")
     
-    # Write script file to host then copy to container
-    temp_path = '/tmp/timing_attack_host.py'
-    with open(temp_path, 'w') as f:
-        f.write(scapy_script)
+    # Write script directly inside container to avoid user namespace mapping issues
+    write_cmd = ['docker', 'exec', 'attacker', 'sh', '-c', 
+                 f'cat > /tmp/timing_attack.py << \'EOFMARKER\'\n{scapy_script}\nEOFMARKER']
     
-    # Copy script to attacker container with error checking
-    copy_result = subprocess.run(
-        ['docker', 'cp', temp_path, 'attacker:/tmp/timing_attack.py'], 
-        capture_output=True, text=True
-    )
+    write_result = subprocess.run(write_cmd, capture_output=True, text=True)
     
-    if copy_result.returncode != 0:
-        print(f"❌ Failed to copy timing script to container: {copy_result.stderr}")
+    if write_result.returncode != 0:
+        print(f"❌ Failed to write timing script to container: {write_result.stderr}")
         # Still try to continue
-    
-    # Clean up host temp file
-    try:
-        os.unlink(temp_path)
-    except:
-        pass
     
     print("🚀 Executing timing anomaly attack...")
     cmd = ['docker', 'exec', 'attacker', 'python3', '/tmp/timing_attack.py']
