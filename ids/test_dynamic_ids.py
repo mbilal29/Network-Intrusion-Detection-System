@@ -9,6 +9,7 @@ import sys
 import json
 import random
 import time
+import webbrowser
 from enhanced_ids import EnhancedIDS
 from scapy.all import *
 
@@ -349,6 +350,11 @@ def main():
         if result.returncode == 0:
             print("✅ HTML report generated successfully")
             print("   Location: outputs/reports/ids_report.html")
+            
+            # Auto-open report in browser
+            report_path = os.path.abspath('outputs/reports/ids_report.html')
+            print(f"\n🌐 Opening report in browser...")
+            webbrowser.open(f'file://{report_path}')
         else:
             print(f"⚠️  Report generation had warnings")
             if result.stderr:
