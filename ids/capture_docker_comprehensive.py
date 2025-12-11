@@ -113,11 +113,11 @@ for i in range(8):
 print("ARP spoofing completed")
 """
     
-    with open('/tmp/arp_spoof.py', 'w') as f:
-        f.write(arp_spoof_script)
+    # Write script directly into container
+    write_cmd = ['docker', 'exec', 'attacker', 'sh', '-c', 
+                 f'cat > /tmp/arp_spoof.py << \'EOFMARKER\'\n{arp_spoof_script}\nEOFMARKER']
+    subprocess.run(write_cmd, capture_output=True)
     
-    subprocess.run(['docker', 'cp', '/tmp/arp_spoof.py', 'attacker:/tmp/arp_spoof.py'], 
-                   capture_output=True)
     result = subprocess.run(['docker', 'exec', 'attacker', 'python3', '/tmp/arp_spoof.py'],
                            capture_output=True, text=True, timeout=10)
     print("   ✅ ARP spoofing completed (MAC changes)")
@@ -136,11 +136,11 @@ for i in range(180):
 print("ICMP flood completed")
 """
     
-    with open('/tmp/icmp_flood.py', 'w') as f:
-        f.write(icmp_script)
+    # Write script directly into container
+    write_cmd = ['docker', 'exec', 'attacker', 'sh', '-c', 
+                 f'cat > /tmp/icmp_flood.py << \'EOFMARKER\'\n{icmp_script}\nEOFMARKER']
+    subprocess.run(write_cmd, capture_output=True)
     
-    subprocess.run(['docker', 'cp', '/tmp/icmp_flood.py', 'attacker:/tmp/icmp_flood.py'],
-                   capture_output=True)
     result = subprocess.run(['docker', 'exec', 'attacker', 'python3', '/tmp/icmp_flood.py'],
                            capture_output=True, text=True, timeout=15)
     print("   ✅ ICMP flood completed (180 packets)")
@@ -165,11 +165,11 @@ for i in range(25):
 print("DNS tunneling completed")
 """
     
-    with open('/tmp/dns_tunnel.py', 'w') as f:
-        f.write(dns_script)
+    # Write script directly into container
+    write_cmd = ['docker', 'exec', 'attacker', 'sh', '-c', 
+                 f'cat > /tmp/dns_tunnel.py << \'EOFMARKER\'\n{dns_script}\nEOFMARKER']
+    subprocess.run(write_cmd, capture_output=True)
     
-    subprocess.run(['docker', 'cp', '/tmp/dns_tunnel.py', 'attacker:/tmp/dns_tunnel.py'],
-                   capture_output=True)
     result = subprocess.run(['docker', 'exec', 'attacker', 'python3', '/tmp/dns_tunnel.py'],
                            capture_output=True, text=True, timeout=10)
     print("   ✅ DNS tunneling completed (25 suspicious queries)")
