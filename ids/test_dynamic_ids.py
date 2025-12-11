@@ -341,6 +341,21 @@ def main():
     except Exception as e:
         print(f"⚠️  Visualization generation failed: {e}")
     
+    # Generate HTML report with embedded charts
+    print("\n📄 Generating HTML report...")
+    try:
+        result = subprocess.run([sys.executable, 'generate_report.py'], 
+                              capture_output=True, text=True)
+        if result.returncode == 0:
+            print("✅ HTML report generated successfully")
+            print("   Location: outputs/reports/ids_report.html")
+        else:
+            print(f"⚠️  Report generation had warnings")
+            if result.stderr:
+                print(f"   {result.stderr[:200]}")
+    except Exception as e:
+        print(f"⚠️  Report generation failed: {e}")
+    
     print("=" * 70)
 
 
