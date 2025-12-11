@@ -5,7 +5,7 @@
 **Institution:** University of Toronto  
 **Date:** December 10, 2025
 
-**📹 Project Demo Video:** [Watch Here](https://docs.google.com/document/d/19Kz9cadneugkCYGYfl98pCVCgkSSDmg7sZLIwlQ3Fag/edit?usp=sharing)
+**📹 Project Demo Video:** [Watch Here](https://drive.google.com/file/d/14wE3Rp3J8Pa-03IXZ3EbmpIWQJmgQwvC/view?usp=drive_link)
 
 ---
 
