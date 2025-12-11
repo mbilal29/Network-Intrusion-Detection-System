@@ -235,19 +235,22 @@ Network-Intrusion-Detection-System/
 **System Requirements:**
 - macOS, Linux, or Windows with WSL2
 - At least 2GB RAM
-- Unzip utility (built into most systems)
 
 ### 3.2 Initial Setup
 
-**Step 1: Extract the project files**
+**Step 1: Get the project files**
 ```bash
-# Extract the ZIP file to your desired location
-unzip Network-Intrusion-Detection-System.zip
+# Clone from GitHub
+git clone https://github.com/mbilal29/Network-Intrusion-Detection-System.git
 cd Network-Intrusion-Detection-System
+
+# Or extract from ZIP if provided
+# unzip Network-Intrusion-Detection-System.zip
+# cd Network-Intrusion-Detection-System
 
 # Verify project structure
 ls
-# Should see: ids/, docker/, pcaps/, docs/, docker-compose.yml, README.md
+# Should see: ids/, docker/, pcaps/, docker-compose.yml, README.md
 ```
 
 **Step 2: Set up Python environment**
