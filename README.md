@@ -5,8 +5,6 @@
 **Institution:** University of Toronto  
 **Date:** December 10, 2025
 
-**📹 Project Demo Video:** [Watch Here](https://drive.google.com/file/d/14wE3Rp3J8Pa-03IXZ3EbmpIWQJmgQwvC/view?usp=drive_link)
-
 ---
 
 ## 1. Project Description and Goals
